@@ -11,7 +11,7 @@ PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreads
 
 
 ## Usage 
-The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
+The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
 
 Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected. 
 
