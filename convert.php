@@ -11,6 +11,9 @@ $fileName = 'scripta-1970.xlsx';
 // The default locale. For other locales use locale:fieldName
 $defaultLocale = 'en_US';
 
+// The uploader account name
+$uploader = "admin";
+
 // The maximum number of authors per article, eg. authorLastname3 => 3
 $maxAuthors = 1;
 
@@ -217,12 +220,13 @@ $fileId = 1;
 				
 				fwrite ($xmlfile,"\t\t\t\t\t<firstname>".$article['authorFirstname'.$i]."</firstname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t<lastname>".$article['authorLastname'.$i]."</lastname>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
-				
+
 				if (isset($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$defaultLocale."\">".$article['authorAffiliation'.$i]."</affiliation>\r\n");
 				}
 				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
+
+				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				
 				if (isset($article['country'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<country>".$article['country'.$i]."</country>\r\n");
@@ -270,7 +274,7 @@ $fileId = 1;
 				
 				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" user_group_ref=\"Author\" uploader=\"admin\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" user_group_ref=\"Author\" uploader=\"".$uploader."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$defaultLocale."\">".$article['file'.$i]."</name>\r\n");				
 
