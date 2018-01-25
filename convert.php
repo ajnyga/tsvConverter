@@ -221,8 +221,9 @@ $fileId = 1;
 				
 				if (isset($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$defaultLocale."\">".$article['authorAffiliation'.$i]."</affiliation>\r\n");
-					# TODO: check for multilingual missing!!!
 				}
+				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
+				
 				if (isset($article['country'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<country>".$article['country'.$i]."</country>\r\n");
 				}
@@ -231,9 +232,7 @@ $fileId = 1;
 				}
 				if (isset($article['authorBio'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$defaultLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
-				}				
-				
-				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
+				}
 				
 				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
 
@@ -254,8 +253,19 @@ $fileId = 1;
 			if ($article['file'.$i]){
 					
 				$file = $filesFolder.$article['file'.$i];
-				$fileSize = filesize($file);
-				$fileType = mime_content_type($file);
+				$fileSize = filesize($file);				
+				if(function_exists('mime_content_type')){
+					$fileType = mime_content_type($file);
+				}
+				elseif(function_exists('finfo_open')){
+					$fileinfo = new finfo();
+					$fileType = $fileinfo->file($file, FILEINFO_MIME_TYPE);
+				}
+				else {
+					echo date('H:i:s') , " ERROR: You need to enable fileinfo or mime_magic extension.", EOL;
+				}
+				
+				
 				$fileContents = file_get_contents ($file);
 				
 				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
