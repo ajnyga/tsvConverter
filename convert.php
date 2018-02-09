@@ -6,9 +6,9 @@
  */
 
 // The file containing the metadata
-$fileName = 'scripta-1970.xlsx';
+$fileName = 'example.xlsx';
 
-// The default locale. For other locales use locale:fieldName
+// The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
 $defaultLocale = 'en_US';
 
 // The uploader account name
@@ -32,8 +32,11 @@ $locales = array(
 				'fi' => 'fi_FI',
 				'sv' => 'sv_SE',
 				'de' => 'de_DE',
+				'ge' => 'de_DE',
 				'ru' => 'ru_RU',
 				'fr' => 'fr_FR',
+				'no' => 'nb_NO',
+				'da' => 'da_DK',
 			);
 
 // PHPExcel settings
@@ -160,7 +163,7 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t<section ref=\"".$sectionAbbrev."\">\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<abbrev locale=\"".$defaultLocale."\">".$sectionAbbrev."</abbrev>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<title locale=\"".$defaultLocale."\">".$sectionTitle."</title>\r\n");
-				fwrite ($xmlfile, searchLocalisations('issueTitle', $article, 3));
+				fwrite ($xmlfile, searchLocalisations('sectionTitle', $article, 3));
 				fwrite ($xmlfile,"\t\t\t</section>\r\n");
 			}
 		
@@ -180,23 +183,50 @@ $fileId = 1;
 	# Article
 	echo date('H:i:s') , " Adding article: ", $article['title'] , EOL;
 
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$defaultLocale."\" stage=\"production\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
+	# Check if language has an alternative default locale
+	# If it does, use the locale in all fields
+	$articleLocale = $defaultLocale;
+	if ($article['language']){
+		$articleLocale = $locales[$article['language']];
+	}
+	
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
-		fwrite ($xmlfile,"\t\t\t<title locale=\"".$defaultLocale."\">".$article['title']."</title>\r\n");
+		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\">".$article['title']."</title>\r\n");
 		fwrite ($xmlfile, searchLocalisations('title', $article, 3));
 		
 		if (isset($article['subtitle'])){	
-			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$defaultLocale."\">".$article['subtitle']."</subtitle>\r\n");
+			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\">".$article['subtitle']."</subtitle>\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
 		
 		if (isset($article['abstract'])){
-			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$defaultLocale."\"><![CDATA[".$article['abstract']."]]></abstract>\r\n\r\n");
+			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".$article['abstract']."]]></abstract>\r\n\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
-	
-		# TODO: add support for licence, supporting agencies and keywords
+
+		# Keywords
+		if (isset($article['keywords'])){
+			fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
+			$keywords = explode(";", $article['keywords']);
+			foreach ($keywords as $keyword){
+				fwrite ($xmlfile,"\t\t\t\t<keyword>".trim($keyword)."</keyword>\r\n");	
+			}
+			fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
+		}		
+
+		# Disciplines
+		if (isset($article['disciplines'])){
+			fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
+			$disciplines = explode(";", $article['disciplines']);
+			foreach ($disciplines as $discipline){
+				fwrite ($xmlfile,"\t\t\t\t<disciplin>".trim($discipline)."</disciplin>\r\n");	
+			}
+			fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
+		}		
+		
+		# TODO: add support for licence, supporting agencies
 		/*
 		<agencies locale="fi_FI">
 			<agency></agency>
@@ -222,20 +252,21 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t\t\t<lastname>".$article['authorLastname'.$i]."</lastname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$defaultLocale."\">".$article['authorAffiliation'.$i]."</affiliation>\r\n");
+					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\">".$article['authorAffiliation'.$i]."</affiliation>\r\n");
 				}
 				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
 
-				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
-				
 				if (isset($article['country'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<country>".$article['country'.$i]."</country>\r\n");
-				}
+				}				
+				
+				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
+				
 				if (isset($article['orcid'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<orcid>".$article['orcid'.$i]."</orcid>\r\n");
 				}
 				if (isset($article['authorBio'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$defaultLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
+					fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$articleLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
 				}
 				
 				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
@@ -274,9 +305,12 @@ $fileId = 1;
 				
 				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
 				
+				if (!$article['fileGenre'.$i])
+					$article['fileGenre'.$i] = "Article Text";
+				
 				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" user_group_ref=\"Author\" uploader=\"".$uploader."\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$defaultLocale."\">".$article['file'.$i]."</name>\r\n");				
+				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".$article['file'.$i]."</name>\r\n");				
 
 				fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
 				fwrite ($xmlfile, base64_encode($fileContents));
@@ -286,7 +320,7 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
 
 				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$defaultLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$articleLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
@@ -297,13 +331,14 @@ $fileId = 1;
 			}
 
 		}
-	
-	
+		
 		# Submission galleys
-		foreach ($galleys as $key => $galley){
-			fwrite ($xmlfile,"\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
-			fwrite ($xmlfile, $galley);
-			fwrite ($xmlfile,"\t\t\t</article_galley>\r\n\r\n");				
+		if (isset($galleys)){
+			foreach ($galleys as $key => $galley){
+				fwrite ($xmlfile,"\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
+				fwrite ($xmlfile, $galley);
+				fwrite ($xmlfile,"\t\t\t</article_galley>\r\n\r\n");				
+			}
 		}
 	
 		# pages
@@ -390,7 +425,7 @@ function sortByIssueDate($a, $b) {
 # Function for data validation
 function validateArticles($articles) {
 	
-	global $maxFiles, $filesFolder, $defaultLocale;
+	global $maxFiles, $filesFolder, $articleLocale;
 	$errors = "";
 	
 	if (emptyElementExists(array_column($articles, 'issueYear'))){
@@ -402,15 +437,15 @@ function validateArticles($articles) {
 	}
 
 	if (emptyElementExists(array_column($articles, 'title'))){
-		$errors .= date('H:i:s') . " ERROR: article title missing for the given default locale ". $defaultLocale . EOL;
+		$errors .= date('H:i:s') . " ERROR: article title missing for the given default locale ". $articleLocale . EOL;
 	}
 
 	if (emptyElementExists(array_column($articles, 'sectionTitle'))){
-		$errors .= date('H:i:s') . " ERROR: section title missing for the given default locale " . $defaultLocale . EOL;
+		$errors .= date('H:i:s') . " ERROR: section title missing for the given default locale " . $articleLocale . EOL;
 	}
 
 	if (emptyElementExists(array_column($articles, 'sectionAbbrev'))){
-		$errors .= date('H:i:s') . " ERROR: section abbreviation missing for the given default locale " . $defaultLocale . EOL;
+		$errors .= date('H:i:s') . " ERROR: section abbreviation missing for the given default locale " . $articleLocale . EOL;
 	}
 
 	foreach ($articles as $key => $article){
