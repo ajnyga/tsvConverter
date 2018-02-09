@@ -6,7 +6,7 @@ The conversion tool is distributed under the GNU GPL v2.
 
 The conversion tool uses the PHPExvel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
 
-## Version 1.1.0
+## Changes in version 1.1.0 (Feb 2018)
 
 - Support for keywords and disciplines
 - better support for articles in alternative locales, see below
@@ -36,6 +36,8 @@ Before importing the created data to your production server, you should try to i
 | seq |  Article sequence inside an issue, first article '1' | x  |
 | pages| For example "23-45"  |  |
 | language| Alternative article language "en", "fi", "sv", "de", "fr"  |  |
+| keywords| Word 1; Word 2; Word3 |  |
+| disciplines| History; Political science; Astronomy |  |
 
 ## Issue
 | Field | Description |  Required|
@@ -47,7 +49,6 @@ Before importing the created data to your production server, you should try to i
 | issueTitle |  Issue title |  |
 | sectionTitle |  Section title, eg. "Articles" | x  |
 | sectionAbbrev |  Section abbreviation, eg. "ART" | x  |                    
-| sectionAbbrev |  Section abbreviation, eg. "ART" | x  |
                     
 ## Multiplied fields
 An article can have multiple authors or full text files. Every article has to have at least one author and one file.
