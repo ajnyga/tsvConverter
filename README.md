@@ -61,7 +61,7 @@ If an article has for example three authors, the excel file should include colum
 | authorFirstname1|  First name | x |
 | authorMiddlename1|  Middle name |  |
 | authorLastname1|  Last name | x  |
-| authorEmail1|  Email | x  |
+| authorEmail1|  Email |  |
 | authorAffiliation1|  Affiliation |   |
 | country1|  "FI", "SE", "DK", "CA", "US" |   |
 | orcid1|  Orcid ID, should include "https://". Note that adding Orcid ID's this way is not recommended by Orcid. |   |
