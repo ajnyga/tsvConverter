@@ -8,7 +8,7 @@ The conversion tool uses the PHPExvel library. PHPExcel is licensed under [LGPL 
 
 ## Changes in version 1.1.0 (Feb 2018)
 
-- Support for keywords and disciplines
+- Support for keywords and disciplines, authorEmail and authorMiddlename
 - better support for articles in alternative locales, see below
 
 ## Todo
