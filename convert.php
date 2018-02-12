@@ -249,6 +249,9 @@ $fileId = 1;
 					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t\t<firstname>".$article['authorFirstname'.$i]."</firstname>\r\n");
+				if (isset($article['authorMiddlename'.$i])){
+					fwrite ($xmlfile,"\t\t\t\t\t<middlename>".$article['authorMiddlename'.$i]."</middlename>\r\n");
+				}
 				fwrite ($xmlfile,"\t\t\t\t\t<lastname>".$article['authorLastname'.$i]."</lastname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
@@ -258,10 +261,15 @@ $fileId = 1;
 
 				if (isset($article['country'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<country>".$article['country'.$i]."</country>\r\n");
-				}				
-				
-				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
-				
+				}
+
+				if (isset($article['authorEmail'.$i])){
+					fwrite ($xmlfile,"\t\t\t\t\t<email>".$article['authorEmail'.$i]."</email>\r\n");
+				}
+				else{
+					fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
+				}
+
 				if (isset($article['orcid'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<orcid>".$article['orcid'.$i]."</orcid>\r\n");
 				}
