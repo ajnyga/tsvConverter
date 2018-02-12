@@ -381,7 +381,7 @@ function searchLocalisations($key, $input, $intend, $tag = null, $flags = null) 
 	foreach ($values as $keyval => $value){
 		if ($value != ""){
 			$shortLocale = explode(":", $keyval);
-			if (strpos($value, "\n") !== false) $value = "<![CDATA[".nl2br($value)."]]>";
+			if (strpos($value, "\n") !== false || strpos($value, "&") !== false) $value = "<![CDATA[".nl2br($value)."]]>";
 			for ($i = 0; $i < $intend; $i++) $nodes .= "\t";
 			$nodes .= "<".$tag." locale=\"".$locales[$shortLocale[0]]."\">".$value."</".$tag.">\r\n";
 		}
