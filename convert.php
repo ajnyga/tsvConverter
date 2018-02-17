@@ -15,10 +15,10 @@ $defaultLocale = 'en_US';
 $uploader = "admin";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 1;
+$maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
-$maxFiles = 1;
+$maxFiles = 2;
 
 // Set to '1' if you only want to validate the data
 $onlyValidate = 0;
@@ -37,6 +37,7 @@ $locales = array(
 				'fr' => 'fr_FR',
 				'no' => 'nb_NO',
 				'da' => 'da_DK',
+				'es' => 'es_ES',
 			);
 
 // PHPExcel settings
@@ -255,7 +256,7 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t\t\t<lastname>".$article['authorLastname'.$i]."</lastname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\">".$article['authorAffiliation'.$i]."</affiliation>\r\n");
+					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
 				}
 				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
 
@@ -328,7 +329,7 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
 
 				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$articleLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
@@ -389,7 +390,7 @@ function searchLocalisations($key, $input, $intend, $tag = null, $flags = null) 
 	foreach ($values as $keyval => $value){
 		if ($value != ""){
 			$shortLocale = explode(":", $keyval);
-			if (strpos($value, "\n") !== false || strpos($value, "&") !== false) $value = "<![CDATA[".nl2br($value)."]]>";
+			if (strpos($value, "\n") !== false || strpos($value, "&") !== false || strpos($value, "<") !== false || strpos($value, ">") !== false ) $value = "<![CDATA[".nl2br($value)."]]>";
 			for ($i = 0; $i < $intend; $i++) $nodes .= "\t";
 			$nodes .= "<".$tag." locale=\"".$locales[$shortLocale[0]]."\">".$value."</".$tag.">\r\n";
 		}
@@ -457,9 +458,10 @@ function validateArticles($articles) {
 	}
 
 	foreach ($articles as $key => $article){
-			for ($i = 1; $i < $maxFiles; $i++) {
+						
+			for ($i = 1; $i <= $maxFiles; $i++) {
+
 				if ($article['file'.$i]){
-					
 					$fileCheck = $filesFolder.$article['file'.$i]; 
 					
 					if (!file_exists($fileCheck)) 
