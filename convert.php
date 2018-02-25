@@ -191,7 +191,7 @@ $fileId = 1;
 		$articleLocale = $locales[$article['language']];
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\">".$article['title']."</title>\r\n");
