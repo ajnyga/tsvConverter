@@ -13,7 +13,7 @@ The conversion tool uses the PHPExvel library. PHPExcel is licensed under [LGPL 
 
 ## Todo
 PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreadsheet) should be used instead.
-
+Support rich text in cells
 
 ## Usage 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
