@@ -317,7 +317,7 @@ $fileId = 1;
 				if (!$article['fileGenre'.$i])
 					$article['fileGenre'.$i] = "Article Text";
 				
-				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" user_group_ref=\"Author\" uploader=\"".$uploader."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".$article['file'.$i]."</name>\r\n");				
 
