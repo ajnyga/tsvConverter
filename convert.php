@@ -14,6 +14,10 @@ $defaultLocale = 'en_US';
 // The uploader account name
 $uploader = "admin";
 
+// Default author name. If no author is given for an article, this name is used instead.
+$defaultAuthor['firstname'] = "Toimitus";
+$defaultAuthor['lastname'] = "Media & viestintä";
+
 // The maximum number of authors per article, eg. authorLastname3 => 3
 $maxAuthors = 2;
 
@@ -147,7 +151,7 @@ $fileId = 1;
 			fwrite ($xmlfile,"\t\t\t<number>".$article['issueNumber']."</number>\r\n");			
 		fwrite ($xmlfile,"\t\t\t<year>".$article['issueYear']."</year>\r\n");
 		
-		if ($article['issueTitle']){
+		if (isset($article['issueTitle'])){
 			fwrite ($xmlfile,"\t\t\t<title>".$article['issueTitle']."</title>\r\n");
 		}
 		# Add alternative localisations for the issue title
@@ -194,11 +198,11 @@ $fileId = 1;
 	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
-		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\">".$article['title']."</title>\r\n");
+		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
 		fwrite ($xmlfile, searchLocalisations('title', $article, 3));
 		
 		if (isset($article['subtitle'])){	
-			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\">".$article['subtitle']."</subtitle>\r\n");
+			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\"><![CDATA[".$article['subtitle']."]]></subtitle>\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
 		
@@ -212,7 +216,7 @@ $fileId = 1;
 			fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
 			$keywords = explode(";", $article['keywords']);
 			foreach ($keywords as $keyword){
-				fwrite ($xmlfile,"\t\t\t\t<keyword>".trim($keyword)."</keyword>\r\n");	
+				fwrite ($xmlfile,"\t\t\t\t<keyword><![CDATA[".trim($keyword)."]]></keyword>\r\n");	
 			}
 			fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
 		}		
@@ -222,7 +226,7 @@ $fileId = 1;
 			fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
 			$disciplines = explode(";", $article['disciplines']);
 			foreach ($disciplines as $discipline){
-				fwrite ($xmlfile,"\t\t\t\t<disciplin>".trim($discipline)."</disciplin>\r\n");	
+				fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
 			}
 			fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
 		}		
@@ -249,11 +253,11 @@ $fileId = 1;
 				else
 					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname>".$article['authorFirstname'.$i]."</firstname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$article['authorFirstname'.$i]."]]></firstname>\r\n");
 				if (isset($article['authorMiddlename'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<middlename>".$article['authorMiddlename'.$i]."</middlename>\r\n");
+					fwrite ($xmlfile,"\t\t\t\t\t<middlename><![CDATA[".$article['authorMiddlename'.$i]."]]></middlename>\r\n");
 				}
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname>".$article['authorLastname'.$i]."</lastname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$article['authorLastname'.$i]."]]></lastname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
@@ -261,7 +265,7 @@ $fileId = 1;
 				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
 
 				if (isset($article['country'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<country>".$article['country'.$i]."</country>\r\n");
+					fwrite ($xmlfile,"\t\t\t\t\t<country><![CDATA[".$article['country'.$i]."]]></country>\r\n");
 				}
 
 				if (isset($article['authorEmail'.$i])){
@@ -283,6 +287,15 @@ $fileId = 1;
 				
 			}
 
+		}
+
+		# If no authors are given, use default author name
+		if (!$article['authorLastname1']){
+				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$defaultAuthor['firstname']."]]></firstname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$defaultAuthor['lastname']."]]></lastname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
 		}
 
 		fwrite ($xmlfile,"\t\t\t</authors>\r\n\r\n");
