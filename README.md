@@ -6,14 +6,16 @@ The conversion tool is distributed under the GNU GPL v2.
 
 The conversion tool uses the PHPExvel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
 
-## Changes in version 1.1.0 (Feb 2018)
+## Changes in version 1.1.0.8 (Sep 2018)
+- Support rich text in abstract fields
+
+## Changes in version 1.1.0.7 (Sep 2018)
 
 - Support for keywords and disciplines, authorEmail and authorMiddlename
 - better support for articles in alternative locales, see below
 
 ## Todo
 PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreadsheet) should be used instead.
-Support rich text in cells
 
 ## Usage 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.

@@ -15,14 +15,14 @@ $defaultLocale = 'en_US';
 $uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
-$defaultAuthor['firstname'] = "Toimitus";
-$defaultAuthor['lastname'] = "Media & viestintä";
+$defaultAuthor['firstname'] = "Editorial";
+$defaultAuthor['lastname'] = "Board";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
 $maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
-$maxFiles = 2;
+$maxFiles = 1;
 
 // Set to '1' if you only want to validate the data
 $onlyValidate = 0;
@@ -52,20 +52,20 @@ date_default_timezone_set('Europe/Helsinki');
 define('EOL',(PHP_SAPI == 'cli') ? PHP_EOL : '<br />');
 require_once dirname(__FILE__) . '/phpexcel/Classes/PHPExcel.php';
 
-
 /* 
  * Load Excel data to an array
  * ------------------------------------
  */
 echo date('H:i:s') , " Creating a new PHPExcel object" , EOL;
-$objReader = PHPExcel_IOFactory::createReaderForFile($fileName);
-$objReader->setReadDataOnly(); 
+
+$objReader = \PHPExcel_IOFactory::createReaderForFile($fileName);
+$objReader->setReadDataOnly(false);
 $objPHPExcel = $objReader->load($fileName);
+$sheet = $objPHPExcel->setActiveSheetIndex(0);
 
 echo date('H:i:s') , " Creating an array" , EOL;
-$sheet = $objPHPExcel->setActiveSheetIndex(0);
-$articles = createArray($sheet);
 
+$articles = createArray($sheet);
 
 /* 
  * Data validation   
@@ -146,20 +146,20 @@ $fileId = 1;
 		fwrite ($xmlfile,"\t\t<issue_identification>\r\n");
 		
 		if ($article['issueVolume'])
-			fwrite ($xmlfile,"\t\t\t<volume>".$article['issueVolume']."</volume>\r\n");	
+			fwrite ($xmlfile,"\t\t\t<volume><![CDATA[".$article['issueVolume']."]]></volume>\r\n");	
 		if ($article['issueNumber'])
-			fwrite ($xmlfile,"\t\t\t<number>".$article['issueNumber']."</number>\r\n");			
-		fwrite ($xmlfile,"\t\t\t<year>".$article['issueYear']."</year>\r\n");
+			fwrite ($xmlfile,"\t\t\t<number><![CDATA[".$article['issueNumber']."]]></number>\r\n");			
+		fwrite ($xmlfile,"\t\t\t<year><![CDATA[".$article['issueYear']."]]></year>\r\n");
 		
 		if (isset($article['issueTitle'])){
-			fwrite ($xmlfile,"\t\t\t<title>".$article['issueTitle']."</title>\r\n");
+			fwrite ($xmlfile,"\t\t\t<title><![CDATA[".$article['issueTitle']."]]></title>\r\n");
 		}
 		# Add alternative localisations for the issue title
 		fwrite ($xmlfile, searchLocalisations('issueTitle', $article, 3));
 		
 		fwrite ($xmlfile,"\t\t</issue_identification>\r\n\r\n");
 		
-		fwrite ($xmlfile,"\t\t<date_published>".$article['issueDatepublished']."</date_published>\r\n\r\n");
+		fwrite ($xmlfile,"\t\t<date_published><![CDATA[".$article['issueDatepublished']."]]></date_published>\r\n\r\n");
 		
 		# Sections
 		fwrite ($xmlfile,"\t\t<sections>\r\n");
@@ -167,7 +167,7 @@ $fileId = 1;
 			foreach ($sections[$article['issueDatepublished']] as $sectionAbbrev => $sectionTitle){
 				fwrite ($xmlfile,"\t\t\t<section ref=\"".$sectionAbbrev."\">\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<abbrev locale=\"".$defaultLocale."\">".$sectionAbbrev."</abbrev>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t<title locale=\"".$defaultLocale."\">".$sectionTitle."</title>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<title locale=\"".$defaultLocale."\"><![CDATA[".$sectionTitle."]]></title>\r\n");
 				fwrite ($xmlfile, searchLocalisations('sectionTitle', $article, 3));
 				fwrite ($xmlfile,"\t\t\t</section>\r\n");
 			}
@@ -420,18 +420,71 @@ function createArray($sheet) {
 	$columncount = PHPExcel_Cell::columnIndexFromString($highestcolumn);
 	$header = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
 	$body = $sheet->rangeToArray('A2:' . $highestcolumn . $highestrow);
-	
+
 	$array = array();
-	for ($row = 0; $row <= $highestrow - 2; $row++) {
+	for ($row = 2; $row <= $highestrow - 2; $row++) {
 		$a = array();
+
 		for ($column = 0; $column <= $columncount - 1; $column++) {
-			$a[$header[0][$column]] = $body[$row][$column];
+
+			if (strpos($header[0][$column], "bstract")) {
+
+					if ($sheet->getCellByColumnAndRow($column,$row)->getValue() instanceof PHPExcel_RichText) {
+
+						$value = $sheet->getCellByColumnAndRow($column,$row)->getValue();
+
+            			$elements = $value->getRichTextElements();
+
+            			$cellData = "";
+
+						foreach ($elements as $element) {
+
+						    if ($element instanceof PHPExcel_RichText_Run) {
+						        if ($element->getFont()->getBold()) {
+						            $cellData .= '<b>';
+						        } elseif ($element->getFont()->getSubScript()) {
+						            $cellData .= '<sub>';  
+						        } elseif ($element->getFont()->getSuperScript()) {
+						            $cellData .= '<sup>';
+						        } elseif ($element->getFont()->getItalic()) {
+						            $cellData .= '<em>';
+						        }
+						    }
+						    // Convert UTF8 data to PCDATA
+						    $cellText = $element->getText();
+						    $cellData .= htmlspecialchars($cellText);
+						    if ($element instanceof PHPExcel_RichText_Run) {
+						        if ($element->getFont()->getBold()) {
+						            $cellData .= '</b>';
+						        } elseif ($element->getFont()->getSubScript()) {
+						            $cellData .= '</sub>';
+						        }  elseif ($element->getFont()->getSuperScript()) {
+						            $cellData .= '</sup>';
+						        } elseif ($element->getFont()->getItalic()) {
+						            $cellData .= '</em>';
+						        }
+						    }
+						}
+
+						$a[$header[0][$column]] = $cellData;
+
+                	}
+                	else{
+                		$a[$header[0][$column]] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
+                	}
+
+			}
+
+			else {
+				$a[$header[0][$column]] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
+			}
 		}
+
 		$array[$row] = $a;
 	}
 	
 	return $array;
-	
+
 }
 
 # Function for searching empty values
