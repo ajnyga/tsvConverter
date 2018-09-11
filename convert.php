@@ -207,7 +207,7 @@ $fileId = 1;
 		fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
 		
 		if (isset($article['abstract'])){
-			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".$article['abstract']."]]></abstract>\r\n\r\n");
+			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".nl2br($article['abstract'])."]]></abstract>\r\n\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
 
