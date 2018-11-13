@@ -422,7 +422,7 @@ function createArray($sheet) {
 	$body = $sheet->rangeToArray('A2:' . $highestcolumn . $highestrow);
 
 	$array = array();
-	for ($row = 2; $row <= $highestrow - 2; $row++) {
+	for ($row = 2; $row <= $highestrow; $row++) {
 		$a = array();
 
 		for ($column = 0; $column <= $columncount - 1; $column++) {
