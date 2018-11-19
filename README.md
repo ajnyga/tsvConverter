@@ -1,16 +1,17 @@
 # Excel to OJS3 XML conversion tool
 
-
 ## Licence
 The conversion tool is distributed under the GNU GPL v2.
 
-The conversion tool uses the PHPExvel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
+The conversion tool uses the PHPExcel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
+
+## Changes in version 1.1.0.11 (Nov 2018)
+- Support remote galleys
 
 ## Changes in version 1.1.0.8 (Sep 2018)
 - Support rich text in abstract fields
 
 ## Changes in version 1.1.0.7 (Sep 2018)
-
 - Support for keywords and disciplines, authorEmail and authorMiddlename
 - better support for articles in alternative locales, see below
 
@@ -72,7 +73,7 @@ If an article has for example three authors, the excel file should include colum
 ### Files
 | Field | Description |  Required|
 |----------|:--------:|:--------:|
-| file1|  Name of the file, "article1.pdf"| x |
+| file1|  Name of the file, "article1.pdf" or url for remote galley| x |
 | fileLabel1|  Usually "PDF"| x |
 | fileGenre1|  Usually "Article Text"| x |
 | fileLocale1|  "en", "fi" etc. | x |

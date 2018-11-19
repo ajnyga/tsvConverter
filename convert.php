@@ -307,7 +307,7 @@ $fileId = 1;
 		
 		for ($i = 1; $i <= $maxFiles; $i++) {
 			
-			if ($article['file'.$i]){
+			if (!preg_match("@^https?://@", $article['file'.$i])) {
 					
 				$file = $filesFolder.$article['file'.$i];
 				$fileSize = filesize($file);				
@@ -348,10 +348,19 @@ $fileId = 1;
 				$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
 				
 				$fileId++;
-				$fileSeq++;
-				
+			
+			}
+			else {
+
+				# save remote galley data
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
+				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
+				$galleys[$fileId] .= "\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
+
 			}
 
+			$fileSeq++;
 		}
 		
 		# Submission galleys
