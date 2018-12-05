@@ -5,6 +5,9 @@ The conversion tool is distributed under the GNU GPL v2.
 
 The conversion tool uses the PHPExcel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
 
+## Changes in version 1.1.0.12 (Dec 2018)
+- Support multilingual keywords
+
 ## Changes in version 1.1.0.11 (Nov 2018)
 - Support remote galleys
 
@@ -82,7 +85,7 @@ If an article has for example three authors, the excel file should include colum
 
 The new version of the converter supports three different ways of handling locales:
 - Alternative 1: If all your data is in one language, you can just give the defaultLocale value in the converter settings.
-- Alternative 2: If some of your articles are for example in English and some in Finnish, you can add an additional column named "language" and give the article locale in that column. See the example xls-file. All the article medata will be saved using the given locale.
+- Alternative 2: If some of your articles are for example in English and some in Finnish, you can add an additional column named "language" and give the article locale in that column. See the example xls-file. All the article medata will be saved using the locale given in the language field. For example *title* can contain both English and Finnish titles as long as the language column matches the language used in the field.
 - Alternative 3: If your articles are all in one language, but you also have some metadata in other languages, for example an abstract in another language, you can give an additional abstract field in a column named locale:abstract (for example en:abstract)
 
 

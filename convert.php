@@ -19,7 +19,7 @@ $defaultAuthor['firstname'] = "Editorial";
 $defaultAuthor['lastname'] = "Board";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 2;
+$maxAuthors = 3;
 
 // The maximum number of files per article, eg. file2 => 2
 $maxFiles = 1;
@@ -67,6 +67,7 @@ echo date('H:i:s') , " Creating an array" , EOL;
 
 $articles = createArray($sheet);
 
+
 /* 
  * Data validation   
  * -----------
@@ -108,14 +109,15 @@ echo date('H:i:s') , " Starting XML output" , EOL;
 $currentIssueDatepublished = null;	
 $currentYear = null;
 $fileId = 1;
-	
+
+
 	foreach ($articles as $key => $article){
 	
 	# Issue :: if issueDatepublished has changed, start a new issue
 	if ($currentIssueDatepublished != $article['issueDatepublished']){
 		
 		$newYear = date('Y', strtotime($article['issueDatepublished']));
-		
+
 		# close old issue if one exists
 		if ($currentIssueDatepublished != null){
 			fwrite ($xmlfile,"\t\t</articles>\r\n");
@@ -213,23 +215,30 @@ $fileId = 1;
 
 		# Keywords
 		if (isset($article['keywords'])){
-			fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
-			$keywords = explode(";", $article['keywords']);
-			foreach ($keywords as $keyword){
-				fwrite ($xmlfile,"\t\t\t\t<keyword><![CDATA[".trim($keyword)."]]></keyword>\r\n");	
+			if (trim($article['keywords']) != ""){
+				fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
+				$keywords = explode(";", $article['keywords']);
+				foreach ($keywords as $keyword){
+					fwrite ($xmlfile,"\t\t\t\t<keyword><![CDATA[".trim($keyword)."]]></keyword>\r\n");	
+				}
+				fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
 			}
-			fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
-		}		
+			fwrite ($xmlfile, searchTaxonomyLocalisations('keywords', 'keyword', $article, 3));
+		}
+
 
 		# Disciplines
 		if (isset($article['disciplines'])){
-			fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
-			$disciplines = explode(";", $article['disciplines']);
-			foreach ($disciplines as $discipline){
-				fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
+			if (trim($article['disciplines']) != "") {
+				fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
+				$disciplines = explode(";", $article['disciplines']);
+				foreach ($disciplines as $discipline){
+					fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
+				}
+				fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
 			}
-			fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
-		}		
+			fwrite ($xmlfile, searchTaxonomyLocalisations('disciplines', 'disciplin', $article, 3));
+		}
 		
 		# TODO: add support for licence, supporting agencies
 		/*
@@ -307,7 +316,7 @@ $fileId = 1;
 		
 		for ($i = 1; $i <= $maxFiles; $i++) {
 			
-			if (!preg_match("@^https?://@", $article['file'.$i])) {
+			if (!preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 					
 				$file = $filesFolder.$article['file'.$i];
 				$fileSize = filesize($file);				
@@ -322,7 +331,6 @@ $fileId = 1;
 					echo date('H:i:s') , " ERROR: You need to enable fileinfo or mime_magic extension.", EOL;
 				}
 				
-				
 				$fileContents = file_get_contents ($file);
 				
 				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
@@ -333,14 +341,12 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".$article['file'.$i]."</name>\r\n");				
-
 				fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
 				fwrite ($xmlfile, base64_encode($fileContents));
 				fwrite ($xmlfile,"\t\t\t\t</embed>\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t</revision>\r\n");				
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
-
 				# save galley data
 				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
@@ -350,16 +356,13 @@ $fileId = 1;
 				$fileId++;
 			
 			}
-			else {
-
+			if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 				# save remote galley data
 				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
-
 			}
-
 			$fileSeq++;
 		}
 		
@@ -375,14 +378,14 @@ $fileId = 1;
 		# pages
 		if (isset($article['pages'])){	
 			fwrite ($xmlfile,"\t\t\t<pages>".$article['pages']."</pages>\r\n\r\n");
-		}        
+		}
 
 		
 		fwrite ($xmlfile,"\t\t</article>\r\n\r\n");
+	
 
-	
 	}
-	
+
 	# After exiting the loop close the last XML file
 	echo date('H:i:s') , " Closing XML file" , EOL;
 	fwrite ($xmlfile,"\t\t</articles>\r\n");
@@ -390,7 +393,9 @@ $fileId = 1;
 	fwrite ($xmlfile,"</issues>\r\n\r\n");
 
 
-	echo date('H:i:s') , " Conversion finished" , EOL;	
+	echo date('H:i:s') , " Conversion finished" , EOL;
+
+
 	
 
 /* 
@@ -421,6 +426,38 @@ function searchLocalisations($key, $input, $intend, $tag = null, $flags = null) 
 	return $nodes;
 	
 }
+
+# Function for searching alternative locales for a given taxonomy field
+function searchTaxonomyLocalisations($key, $key_singular, $input, $intend, $flags = null) {
+    global $locales;
+		
+	$nodes = "";
+	$intend_string = "";
+	for ($i = 0; $i < $intend; $i++) $intend_string .= "\t";
+	$pattern = "/:".$key."/";
+	$values = array_intersect_key($input, array_flip(preg_grep($pattern, array_keys($input), $flags)));
+		
+	foreach ($values as $keyval => $value){
+		if ($value != ""){
+
+			$shortLocale = explode(":", $keyval);
+
+			$nodes .= $intend_string."<".$key." locale=\"".$locales[$shortLocale[0]]."\">\r\n";
+
+			$subvalues = explode(";", $value);
+			foreach ($subvalues as $subvalue){
+				$nodes .= $intend_string."\t<".$key_singular."><![CDATA[".trim($subvalue)."]]></".$key_singular.">\r\n";	
+			}
+
+			$nodes .= $intend_string . "</".$key.">\r\n";
+
+		}
+	}
+	
+	return $nodes;
+	
+}
+
 
 # Function for creating an array using the first row as keys
 function createArray($sheet) {
@@ -514,6 +551,7 @@ function validateArticles($articles) {
 	
 	if (emptyElementExists(array_column($articles, 'issueYear'))){
 		$errors .= date('H:i:s') . " ERROR: Issue year missing" . EOL;
+		print_r(array_column($articles, 'issueYear'));
 	}
 
 	if (emptyElementExists(array_column($articles, 'issueDatepublished'))){
@@ -536,9 +574,10 @@ function validateArticles($articles) {
 						
 			for ($i = 1; $i <= $maxFiles; $i++) {
 
-				if ($article['file'.$i]){
+				if ($article['file'.$i] && !preg_match("@^https?://@", $article['file'.$i]) ) {
+
 					$fileCheck = $filesFolder.$article['file'.$i]; 
-					
+
 					if (!file_exists($fileCheck)) 
 						$errors .= date('H:i:s') . " ERROR: file missing " . $fileCheck . EOL;
 				}
@@ -548,5 +587,4 @@ function validateArticles($articles) {
 	return $errors;
 
 }
-
 
