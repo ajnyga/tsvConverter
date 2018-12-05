@@ -19,7 +19,7 @@ $defaultAuthor['firstname'] = "Editorial";
 $defaultAuthor['lastname'] = "Board";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 3;
+$maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
 $maxFiles = 1;
