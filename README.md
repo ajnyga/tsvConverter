@@ -27,7 +27,7 @@ The tool was created for "in-house use" at the Federation of Finnish Learned Soc
 Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected. 
 
 1. Create an Excel file containing the article data. See the details below and the "example.xlsx" file. The metadata of each article is in one row. The order of the columns does not matter. 
-2. Order the Excel file according to the publication date field and the article sequence field
+2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
 3. Move the Excel file to the same folder with the conversion script. Move the full text files to folder below the conversion script.
 4. Edit "convert.php" file and change the settings in the beginning to match your needs.
 5. Run "php convert.php". The script will create one XML per year.
@@ -49,8 +49,8 @@ Before importing the created data to your production server, you should try to i
 | Field | Description |  Required|
 |----------|:--------:|:--------:|
 | issueDatepublished |  Issue publication date, yyyy-mm-dd | x |
-| issueVolume |  Issue volume | x |
-| issueNumber |  Issue number | x |
+| issueVolume |  Issue volume |  |
+| issueNumber |  Issue number |  |
 | issueYear |  Issue year | x |
 | issueTitle |  Issue title |  |
 | sectionTitle |  Section title, eg. "Articles" | x  |
