@@ -193,7 +193,7 @@ $fileId = 1;
 	# Check if language has an alternative default locale
 	# If it does, use the locale in all fields
 	$articleLocale = $defaultLocale;
-	if ($article['language']){
+	if (isset($article['language'])){
 		$articleLocale = $locales[$article['language']];
 	}
 	
