@@ -41,7 +41,7 @@ Before importing the created data to your production server, you should try to i
 | abstract|  Article abstract |   |
 | seq |  Article sequence inside an issue, first article '1' | x  |
 | pages| For example "23-45"  |  |
-| language| Alternative article language "en", "fi", "sv", "de", "fr"  |  |
+| language| Article language "en", "fi", "sv", "de", "fr"  |  |
 | keywords| Word 1; Word 2; Word3 |  |
 | disciplines| History; Political science; Astronomy |  |
 
