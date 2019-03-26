@@ -193,8 +193,11 @@ $fileId = 1;
 	# Check if language has an alternative default locale
 	# If it does, use the locale in all fields
 	$articleLocale = $defaultLocale;
-	if (isset($article['language'])){
+	#if (isset($article['language'])){
+	if (!empty($article['language'])){
 		$articleLocale = $locales[$article['language']];
+		echo 'language', $article['language'], '|', EOL;
+		echo 'articleLocale', $articleLocale, '|', EOL;
 	}
 	
 	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
