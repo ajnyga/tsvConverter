@@ -11,8 +11,12 @@ $fileName = 'example.xlsx';
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
 $defaultLocale = 'en_US';
 
+// Default article access status, use 0 or 1. Not certain of what this value means.
+$defaultArticleAccessStatus = 1;
+
 // The uploader account name
-$uploader = "admin";
+//$uploader = "admin";
+$uploader = "britadmin";
 
 // Default author name. If no author is given for an article, this name is used instead.
 $defaultAuthor['firstname'] = "Editorial";
@@ -200,7 +204,7 @@ $fileId = 1;
 		echo 'articleLocale', $articleLocale, '|', EOL;
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"0\" seq=\"0\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
