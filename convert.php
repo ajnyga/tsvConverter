@@ -25,7 +25,7 @@ $defaultAuthor['lastname'] = "Board";
 $maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
-$maxFiles = 2;
+$maxFiles = 1;
 
 // Set to '1' if you only want to validate the data
 $onlyValidate = 0;
