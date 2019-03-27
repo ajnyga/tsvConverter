@@ -22,7 +22,7 @@ $defaultAuthor['firstname'] = "Editorial";
 $defaultAuthor['lastname'] = "Board";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 3;
+$maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
 $maxFiles = 2;
@@ -198,8 +198,6 @@ $fileId = 1;
 	$articleLocale = $defaultLocale;
 	if (!empty($article['language'])){
 		$articleLocale = $locales[$article['language']];
-		echo 'language', $article['language'], '|', EOL;
-		echo 'articleLocale', $articleLocale, '|', EOL;
 	}
 	
 	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"".$defaultArticleAccessStatus."\" seq=\"0\">\r\n\r\n");
