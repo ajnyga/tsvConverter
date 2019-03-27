@@ -15,8 +15,7 @@ $defaultLocale = 'en_US';
 $defaultArticleAccessStatus = 1;
 
 // The uploader account name
-//$uploader = "admin";
-$uploader = "britadmin";
+$uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
 $defaultAuthor['firstname'] = "Editorial";
