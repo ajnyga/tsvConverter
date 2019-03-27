@@ -23,10 +23,10 @@ $defaultAuthor['firstname'] = "Editorial";
 $defaultAuthor['lastname'] = "Board";
 
 // The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 2;
+$maxAuthors = 3;
 
 // The maximum number of files per article, eg. file2 => 2
-$maxFiles = 1;
+$maxFiles = 2;
 
 // Set to '1' if you only want to validate the data
 $onlyValidate = 0;
@@ -204,7 +204,7 @@ $fileId = 1;
 		echo 'articleLocale', $articleLocale, '|', EOL;
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"0\" seq=\"0\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"".$defaultArticleAccessStatus."\" seq=\"0\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
