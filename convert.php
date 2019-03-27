@@ -11,7 +11,7 @@ $fileName = 'example.xlsx';
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
 $defaultLocale = 'en_US';
 
-// Default article access status, use 0 or 1. Not certain of what this value means.
+// Default article access status, use 0 or 1.
 $defaultArticleAccessStatus = 1;
 
 // The uploader account name
@@ -197,7 +197,6 @@ $fileId = 1;
 	# Check if language has an alternative default locale
 	# If it does, use the locale in all fields
 	$articleLocale = $defaultLocale;
-	#if (isset($article['language'])){
 	if (!empty($article['language'])){
 		$articleLocale = $locales[$article['language']];
 		echo 'language', $article['language'], '|', EOL;
