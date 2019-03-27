@@ -114,8 +114,9 @@ $currentYear = null;
 $fileId = 1;
 
 
-	foreach ($articles as $key => $article){
-	
+$article_seq = 0;
+foreach ($articles as $key => $article){
+
 	# Issue :: if issueDatepublished has changed, start a new issue
 	if ($currentIssueDatepublished != $article['issueDatepublished']){
 		
@@ -200,193 +201,193 @@ $fileId = 1;
 		$articleLocale = $locales[$article['language']];
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"".$defaultArticleAccessStatus."\" seq=\"0\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" access_status=\"".$defaultArticleAccessStatus."\" seq=\"".$article_seq."\">\r\n\r\n");
 	
-		# Title, subtitle, Abstract
-		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
-		fwrite ($xmlfile, searchLocalisations('title', $article, 3));
-		
-		if (isset($article['subtitle'])){	
-			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\"><![CDATA[".$article['subtitle']."]]></subtitle>\r\n");
-		}
-		fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
-		
-		if (isset($article['abstract'])){
-			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".nl2br($article['abstract'])."]]></abstract>\r\n\r\n");
-		}
-		fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
+	# Title, subtitle, Abstract
+	fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
+	fwrite ($xmlfile, searchLocalisations('title', $article, 3));
+	
+	if (isset($article['subtitle'])){	
+		fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\"><![CDATA[".$article['subtitle']."]]></subtitle>\r\n");
+	}
+	fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
+	
+	if (isset($article['abstract'])){
+		fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".nl2br($article['abstract'])."]]></abstract>\r\n\r\n");
+	}
+	fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
 
-		# Keywords
-		if (isset($article['keywords'])){
-			if (trim($article['keywords']) != ""){
-				fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
-				$keywords = explode(";", $article['keywords']);
-				foreach ($keywords as $keyword){
-					fwrite ($xmlfile,"\t\t\t\t<keyword><![CDATA[".trim($keyword)."]]></keyword>\r\n");	
-				}
-				fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
+	# Keywords
+	if (isset($article['keywords'])){
+		if (trim($article['keywords']) != ""){
+			fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
+			$keywords = explode(";", $article['keywords']);
+			foreach ($keywords as $keyword){
+				fwrite ($xmlfile,"\t\t\t\t<keyword><![CDATA[".trim($keyword)."]]></keyword>\r\n");	
 			}
-			fwrite ($xmlfile, searchTaxonomyLocalisations('keywords', 'keyword', $article, 3));
+			fwrite ($xmlfile,"\t\t\t</keywords>\r\n");
 		}
+		fwrite ($xmlfile, searchTaxonomyLocalisations('keywords', 'keyword', $article, 3));
+	}
 
-
-		# Disciplines
-		if (isset($article['disciplines'])){
-			if (trim($article['disciplines']) != "") {
-				fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
-				$disciplines = explode(";", $article['disciplines']);
-				foreach ($disciplines as $discipline){
-					fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
-				}
-				fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
+	# Disciplines
+	if (isset($article['disciplines'])){
+		if (trim($article['disciplines']) != "") {
+			fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
+			$disciplines = explode(";", $article['disciplines']);
+			foreach ($disciplines as $discipline){
+				fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
 			}
-			fwrite ($xmlfile, searchTaxonomyLocalisations('disciplines', 'disciplin', $article, 3));
+			fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
 		}
-		
-		# TODO: add support for licence, supporting agencies
-		/*
-		<agencies locale="fi_FI">
-			<agency></agency>
-		</agencies>
-		<subjects locale="fi_FI">
-			<subject></subject>
-		</subjects>
-		*/
+		fwrite ($xmlfile, searchTaxonomyLocalisations('disciplines', 'disciplin', $article, 3));
+	}
+	
+	# TODO: add support for licence, supporting agencies
+	/*
+	<agencies locale="fi_FI">
+		<agency></agency>
+	</agencies>
+	<subjects locale="fi_FI">
+		<subject></subject>
+	</subjects>
+	*/
 
-		# Authors
-		fwrite ($xmlfile,"\t\t\t<authors xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
+	# Authors
+	fwrite ($xmlfile,"\t\t\t<authors xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
+	
+	for ($i = 1; $i <= $maxAuthors; $i++) {
 		
-		for ($i = 1; $i <= $maxAuthors; $i++) {
+		if ($article['authorLastname'.$i]){
 			
-			if ($article['authorLastname'.$i]){
-				
-				if ($i == 1)
-					fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
-				else
-					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
-				
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$article['authorFirstname'.$i]."]]></firstname>\r\n");
-				if (isset($article['authorMiddlename'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<middlename><![CDATA[".$article['authorMiddlename'.$i]."]]></middlename>\r\n");
-				}
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$article['authorLastname'.$i]."]]></lastname>\r\n");
+			if ($i == 1)
+				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
+			else
+				fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
+			
+			fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$article['authorFirstname'.$i]."]]></firstname>\r\n");
+			if (isset($article['authorMiddlename'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<middlename><![CDATA[".$article['authorMiddlename'.$i]."]]></middlename>\r\n");
+			}
+			fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$article['authorLastname'.$i]."]]></lastname>\r\n");
 
-				if (isset($article['authorAffiliation'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
-				}
-				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
+			if (isset($article['authorAffiliation'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
+			}
+			fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
 
-				if (isset($article['country'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<country><![CDATA[".$article['country'.$i]."]]></country>\r\n");
-				}
-
-				if (isset($article['authorEmail'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<email>".$article['authorEmail'.$i]."</email>\r\n");
-				}
-				else{
-					fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
-				}
-
-				if (isset($article['orcid'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<orcid>".$article['orcid'.$i]."</orcid>\r\n");
-				}
-				if (isset($article['authorBio'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$articleLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
-				}
-				
-				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
-
-				
+			if (isset($article['country'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<country><![CDATA[".$article['country'.$i]."]]></country>\r\n");
 			}
 
-		}
-
-		# If no authors are given, use default author name
-		if (!$article['authorLastname1']){
-				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$defaultAuthor['firstname']."]]></firstname>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$defaultAuthor['lastname']."]]></lastname>\r\n");
+			if (isset($article['authorEmail'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<email>".$article['authorEmail'.$i]."</email>\r\n");
+			}
+			else{
 				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
-		}
+			}
 
-		fwrite ($xmlfile,"\t\t\t</authors>\r\n\r\n");
-	
-	
-		# Submission files
-		unset($galleys);
-		$fileSeq = 0;
-		
-		for ($i = 1; $i <= $maxFiles; $i++) {
+			if (isset($article['orcid'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<orcid>".$article['orcid'.$i]."</orcid>\r\n");
+			}
+			if (isset($article['authorBio'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$articleLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
+			}
 			
-			if (!preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
-					
-				$file = $filesFolder.$article['file'.$i];
-				$fileSize = filesize($file);				
-				if(function_exists('mime_content_type')){
-					$fileType = mime_content_type($file);
-				}
-				elseif(function_exists('finfo_open')){
-					$fileinfo = new finfo();
-					$fileType = $fileinfo->file($file, FILEINFO_MIME_TYPE);
-				}
-				else {
-					echo date('H:i:s') , " ERROR: You need to enable fileinfo or mime_magic extension.", EOL;
-				}
-				
-				$fileContents = file_get_contents ($file);
-				
-				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
-				
-				if (!$article['fileGenre'.$i])
-					$article['fileGenre'.$i] = "Article Text";
-				
-				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
-				
-				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".$article['file'.$i]."</name>\r\n");				
-				fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
-				fwrite ($xmlfile, base64_encode($fileContents));
-				fwrite ($xmlfile,"\t\t\t\t</embed>\r\n");
-				
-				fwrite ($xmlfile,"\t\t\t\t</revision>\r\n");				
-				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
-				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
-				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
-				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
-				
-				$fileId++;
+			fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
+
 			
-			}
-			if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
-				# save remote galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
-				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
-				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
-			}
-			$fileSeq++;
-		}
-		
-		# Submission galleys
-		if (isset($galleys)){
-			foreach ($galleys as $key => $galley){
-				fwrite ($xmlfile,"\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
-				fwrite ($xmlfile, $galley);
-				fwrite ($xmlfile,"\t\t\t</article_galley>\r\n\r\n");				
-			}
-		}
-	
-		# pages
-		if (isset($article['pages'])){	
-			fwrite ($xmlfile,"\t\t\t<pages>".$article['pages']."</pages>\r\n\r\n");
 		}
 
-		
-		fwrite ($xmlfile,"\t\t</article>\r\n\r\n");
-	
+	}
 
+	# If no authors are given, use default author name
+	if (!$article['authorLastname1']){
+			fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
+			fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$defaultAuthor['firstname']."]]></firstname>\r\n");
+			fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$defaultAuthor['lastname']."]]></lastname>\r\n");
+			fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
+			fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
+	}
+
+	fwrite ($xmlfile,"\t\t\t</authors>\r\n\r\n");
+
+
+	# Submission files
+	unset($galleys);
+	$fileSeq = 0;
+	
+	for ($i = 1; $i <= $maxFiles; $i++) {
+		
+		if (!preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
+				
+			$file = $filesFolder.$article['file'.$i];
+			$fileSize = filesize($file);				
+			if(function_exists('mime_content_type')){
+				$fileType = mime_content_type($file);
+			}
+			elseif(function_exists('finfo_open')){
+				$fileinfo = new finfo();
+				$fileType = $fileinfo->file($file, FILEINFO_MIME_TYPE);
+			}
+			else {
+				echo date('H:i:s') , " ERROR: You need to enable fileinfo or mime_magic extension.", EOL;
+			}
+			
+			$fileContents = file_get_contents ($file);
+			
+			fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
+			
+			if (!$article['fileGenre'.$i])
+				$article['fileGenre'.$i] = "Article Text";
+			
+			fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".$article['fileGenre'.$i]."\" filename=\"".$article['file'.$i]."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
+			
+			fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".$article['file'.$i]."</name>\r\n");				
+			fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
+			fwrite ($xmlfile, base64_encode($fileContents));
+			fwrite ($xmlfile,"\t\t\t\t</embed>\r\n");
+			
+			fwrite ($xmlfile,"\t\t\t\t</revision>\r\n");				
+			fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
+			# save galley data
+			$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+			$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
+			$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
+			$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
+			
+			$fileId++;
+		
+		}
+		if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
+			# save remote galley data
+			$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+			$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
+			$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
+			$galleys[$fileId] .= "\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
+		}
+		$fileSeq++;
+	}
+	
+	# Submission galleys
+	if (isset($galleys)){
+		foreach ($galleys as $key => $galley){
+			fwrite ($xmlfile,"\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
+			fwrite ($xmlfile, $galley);
+			fwrite ($xmlfile,"\t\t\t</article_galley>\r\n\r\n");				
+		}
+	}
+
+	# pages
+	if (isset($article['pages'])){	
+		fwrite ($xmlfile,"\t\t\t<pages>".$article['pages']."</pages>\r\n\r\n");
+	}
+
+	
+	fwrite ($xmlfile,"\t\t</article>\r\n\r\n");
+	
+	echo "article_seq: ", $article_seq, EOL;
+	$article_seq++;
 	}
 
 	# After exiting the loop close the last XML file
