@@ -15,10 +15,10 @@ $defaultLocale = 'en_US';
 $uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
-$defaultAuthor['firstname'] = "Editorial";
-$defaultAuthor['lastname'] = "Board";
+$defaultAuthor['givenname'] = "Editorial";
+$defaultAuthor['familyname'] = "Board";
 
-// The maximum number of authors per article, eg. authorLastname3 => 3
+// The maximum number of authors per article, eg. authorFamilyname3 => 3
 $maxAuthors = 2;
 
 // The maximum number of files per article, eg. file2 => 2
@@ -197,7 +197,7 @@ $fileId = 1;
 		$articleLocale = $locales[$article['language']];
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\" seq=\"".$article['seq']."\" access_status=\"0\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
@@ -255,18 +255,18 @@ $fileId = 1;
 		
 		for ($i = 1; $i <= $maxAuthors; $i++) {
 			
-			if ($article['authorLastname'.$i]){
+			if ($article['authorFamilyname'.$i]){
 				
 				if ($i == 1)
 					fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				else
 					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$article['authorFirstname'.$i]."]]></firstname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$article['authorGivenname'.$i]."]]></givenname>\r\n");
 				if (isset($article['authorMiddlename'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<middlename><![CDATA[".$article['authorMiddlename'.$i]."]]></middlename>\r\n");
 				}
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$article['authorLastname'.$i]."]]></lastname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$article['authorFamilyname'.$i]."]]></familyname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
@@ -299,10 +299,10 @@ $fileId = 1;
 		}
 
 		# If no authors are given, use default author name
-		if (!$article['authorLastname1']){
+		if (!$article['authorFamilyname1']){
 				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$defaultAuthor['firstname']."]]></firstname>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$defaultAuthor['lastname']."]]></lastname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['Givenname']."]]></givenname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$defaultAuthor['Familyname']."]]></familyname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
 		}
