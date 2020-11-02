@@ -167,8 +167,8 @@ $fileId = 1;
 		fwrite ($xmlfile,"\t\t<sections>\r\n");
 		    
 			foreach ($sections[$article['issueDatepublished']] as $sectionAbbrev => $sectionTitle){
-				fwrite ($xmlfile,"\t\t\t<section ref=\"".$sectionAbbrev."\">\r\n");
-				fwrite ($xmlfile,"\t\t\t\t<abbrev locale=\"".$defaultLocale."\">".$sectionAbbrev."</abbrev>\r\n");
+				fwrite ($xmlfile,"\t\t\t<section ref=\"".htmlentities($sectionAbbrev, ENT_XML1)."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<abbrev locale=\"".$defaultLocale."\">".htmlentities($sectionAbbrev, ENT_XML1)."</abbrev>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<title locale=\"".$defaultLocale."\"><![CDATA[".$sectionTitle."]]></title>\r\n");
 				fwrite ($xmlfile, searchLocalisations('sectionTitle', $article, 3));
 				fwrite ($xmlfile,"\t\t\t</section>\r\n");
@@ -197,7 +197,7 @@ $fileId = 1;
 		$articleLocale = $locales[$article['language']];
 	}
 	
-	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".$article['sectionAbbrev']."\">\r\n\r\n");
+	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\">\r\n\r\n");
 	
 		# Title, subtitle, Abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
@@ -212,6 +212,16 @@ $fileId = 1;
 			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".nl2br($article['abstract'])."]]></abstract>\r\n\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
+
+		if (isset($article['articleLicenseUrl'])) {
+			fwrite ($xmlfile,"\t\t\t<licenseUrl><![CDATA[".$article['articleLicenseUrl']."]]></licenseUrl>\r\n");
+		}
+		if (isset($article['articleCopyrightHolder'])) {
+			fwrite ($xmlfile,"\t\t\t<copyrightHolder locale=\"".$articleLocale."\"><![CDATA[".$article['articleCopyrightHolder']."]]></copyrightHolder>\r\n");
+		}
+		if (isset($article['articleCopyrightYear'])) {
+			fwrite ($xmlfile,"\t\t\t<copyrightYear><![CDATA[".$article['articleCopyrightYear']."]]></copyrightYear>\r\n");
+		}
 
 		# Keywords
 		if (isset($article['keywords'])){
@@ -233,14 +243,14 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
 				$disciplines = explode(";", $article['disciplines']);
 				foreach ($disciplines as $discipline){
-					fwrite ($xmlfile,"\t\t\t\t<disciplin><![CDATA[".trim($discipline)."]]></disciplin>\r\n");	
+					fwrite ($xmlfile,"\t\t\t\t<discipline><![CDATA[".trim($discipline)."]]></discipline>\r\n");	
 				}
 				fwrite ($xmlfile,"\t\t\t</disciplines>\r\n");
 			}
 			fwrite ($xmlfile, searchTaxonomyLocalisations('disciplines', 'disciplin', $article, 3));
 		}
 		
-		# TODO: add support for licence, supporting agencies
+		# TODO: add support for subjects, supporting agencies
 		/*
 		<agencies locale="fi_FI">
 			<agency></agency>
