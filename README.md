@@ -24,7 +24,7 @@ PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreads
 ## Usage 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
 
-This release uses the OJS 3.x schema for 3.1.1 and earlier.
+This release uses the OJS 3.x schema for 3.1.2 and later.
 
 Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected. 
 
@@ -69,9 +69,9 @@ If an article has for example three authors, the excel file should include colum
 ### Authors
 | Field | Description |  Required|
 |----------|:--------:|:--------:|
-| authorFirstname1|  First name | x |
+| authorFirstname1|  Given name | x |
 | authorMiddlename1|  Middle name |  |
-| authorLastname1|  Last name | x  |
+| authorLastname1|  Family name |   |
 | authorEmail1|  Email |  |
 | authorAffiliation1|  Affiliation |   |
 | country1|  "FI", "SE", "DK", "CA", "US" |   |

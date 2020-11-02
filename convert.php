@@ -265,18 +265,17 @@ $fileId = 1;
 		
 		for ($i = 1; $i <= $maxAuthors; $i++) {
 			
-			if ($article['authorLastname'.$i]){
+			if ($article['authorFirstname'.$i]){
 				
 				if ($i == 1)
 					fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				else
 					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$article['authorFirstname'.$i]."]]></firstname>\r\n");
-				if (isset($article['authorMiddlename'.$i])){
-					fwrite ($xmlfile,"\t\t\t\t\t<middlename><![CDATA[".$article['authorMiddlename'.$i]."]]></middlename>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$article['authorFirstname'.$i].(isset($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
+				if (isset($article['authorLastname'.$i])){
+					fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$article['authorLastname'.$i]."]]></familyname>\r\n");
 				}
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$article['authorLastname'.$i]."]]></lastname>\r\n");
 
 				if (isset($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
@@ -311,8 +310,8 @@ $fileId = 1;
 		# If no authors are given, use default author name
 		if (!$article['authorLastname1']){
 				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<firstname><![CDATA[".$defaultAuthor['firstname']."]]></firstname>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<lastname><![CDATA[".$defaultAuthor['lastname']."]]></lastname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['firstname']."]]></givenname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$defaultAuthor['lastname']."]]></familyname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
 		}
