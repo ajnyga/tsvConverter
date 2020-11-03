@@ -24,11 +24,13 @@ PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreads
 ## Usage 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
 
+This release uses the OJS 3.x schema for 3.1.2 and later.
+
 Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected. 
 
 1. Create an Excel file containing the article data. See the details below and the "example.xlsx" file. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
-3. Move the Excel file to the same folder with the conversion script. Move the full text files to folder below the conversion script.
+3. Move the Excel file to the same folder with the conversion script. Move the full text files to a "files" folder below the conversion script.
 4. Edit "convert.php" file and change the settings in the beginning to match your needs.
 5. Run "php convert.php". The script will create one XML per year.
 
@@ -44,6 +46,9 @@ Before importing the created data to your production server, you should try to i
 | language| Article language "en", "fi", "sv", "de", "fr"  |  |
 | keywords| Word 1; Word 2; Word3 |  |
 | disciplines| History; Political science; Astronomy |  |
+| articleCopyrightYear| 2005 |  |
+| articleCopyrightHolder| "Institute of Something" |  |
+| articleLicenseUrl| http://creativecommons.org/licenses/by/4.0 |  |
 
 ## Issue
 | Field | Description |  Required|
@@ -64,9 +69,9 @@ If an article has for example three authors, the excel file should include colum
 ### Authors
 | Field | Description |  Required|
 |----------|:--------:|:--------:|
-| authorFirstname1|  First name | x |
+| authorFirstname1|  Given name | x |
 | authorMiddlename1|  Middle name |  |
-| authorLastname1|  Last name | x  |
+| authorLastname1|  Family name |   |
 | authorEmail1|  Email |  |
 | authorAffiliation1|  Affiliation |   |
 | country1|  "FI", "SE", "DK", "CA", "US" |   |
