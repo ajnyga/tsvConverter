@@ -100,12 +100,6 @@ de - German
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
 
-## Changes in version 1.2.2.0 (Mar 2021)
-- Support OJS 3.3
-
-## Changes in version 1.2.1.0 (Mar 2021)
-- Support OJS 3.2
-
 ## Changes in version 1.2.0.0 (Mar 2021)
 - Use PhpSpreadsheet (https://github.com/PHPOffice/PhpSpreadsheet) and Composer
 - Use GPL v3
