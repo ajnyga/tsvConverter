@@ -58,7 +58,7 @@ Only validate by adding -v:
 ## Issue
 | Field | Description |  Required|
 |----------|:--------:|:--------:|
-| issueDatepublished |  Issue publication date, yyyy-mm-dd | x |
+| issueDatepublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |
 | issueVolume |  Issue volume |  |
 | issueNumber |  Issue number |  |
 | issueYear |  Issue year | x |
