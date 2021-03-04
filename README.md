@@ -34,8 +34,8 @@ Only validate by adding -v:
 ### Step by step instructions
 1. Create an Excel file containing the article data. See the details below and the "exampleMinimal.xlsx" and "exampleAdvanced.xlsx" files. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
-3. Move the Excel file to the same folder with the conversion script. Move the full text files to a folder named "files" below the conversion script.
-4. Run *php convert.php exampleMinimal.xlsx files*
+3. Move the Excel file to the same folder with the conversion script. Move the full text files to a folder, for example "exampleFiles", below the conversion script.
+4. Run *php convert.php exampleMinimal.xlsx exampleFiles*
 5. The script will create one XML per year.
 
 ## Article
