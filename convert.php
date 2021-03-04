@@ -5,8 +5,20 @@
  * ---------
  */
 
-// The file containing the metadata
-$fileName = 'example.xlsx';
+$fileName = '';
+$onlyValidate = 0;
+$files = "files";
+
+// Get arguments from command line
+if (isset($argv[1])) {
+	$fileName = $argv[1];
+}
+if (isset($argv[2])) {
+	$files = $argv[2];
+}
+if (isset($argv[3]) && $argv[3] == '-v') {
+	$onlyValidate = 1;
+}
 
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
 $defaultLocale = 'en_US';
@@ -15,20 +27,10 @@ $defaultLocale = 'en_US';
 $uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
-$defaultAuthor['firstname'] = "Editorial";
-$defaultAuthor['lastname'] = "Board";
-
-// The maximum number of authors per article, eg. authorLastname3 => 3
-$maxAuthors = 2;
-
-// The maximum number of files per article, eg. file2 => 2
-$maxFiles = 1;
-
-// Set to '1' if you only want to validate the data
-$onlyValidate = 0;
+$defaultAuthor['givenname'] = "Editorial Board";
 
 // Location of full text files
-$filesFolder = dirname(__FILE__) . "/files/";
+$filesFolder = dirname(__FILE__) . "/". $files ."/";
 
 // Possible locales
 $locales = array(
@@ -50,7 +52,10 @@ ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
 date_default_timezone_set('Europe/Helsinki');
 define('EOL',(PHP_SAPI == 'cli') ? PHP_EOL : '<br />');
-require_once dirname(__FILE__) . '/phpexcel/Classes/PHPExcel.php';
+
+require 'vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /* 
  * Load Excel data to an array
@@ -58,15 +63,16 @@ require_once dirname(__FILE__) . '/phpexcel/Classes/PHPExcel.php';
  */
 echo date('H:i:s') , " Creating a new PHPExcel object" , EOL;
 
-$objReader = \PHPExcel_IOFactory::createReaderForFile($fileName);
+$objReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($fileName);
 $objReader->setReadDataOnly(false);
-$objPHPExcel = $objReader->load($fileName);
-$sheet = $objPHPExcel->setActiveSheetIndex(0);
+$objPhpSpreadsheet = $objReader->load($fileName);
+$sheet = $objPhpSpreadsheet->setActiveSheetIndex(0);
 
 echo date('H:i:s') , " Creating an array" , EOL;
 
 $articles = createArray($sheet);
-
+$maxAuthors = countMaxAuthors($sheet);
+$maxFiles = countMaxFiles($sheet);
 
 /* 
  * Data validation   
@@ -74,6 +80,7 @@ $articles = createArray($sheet);
  */
 
 echo date('H:i:s') , " Validating data" , EOL;
+
 $errors = validateArticles($articles);
 if ($errors != ""){
 	echo $errors, EOL;
@@ -95,7 +102,7 @@ if ($onlyValidate == 1){
 echo date('H:i:s') , " Preparing data for output" , EOL;
 
 # Save section data
-foreach ($articles as $key => $article){
+foreach ($articles as $article){
 	$sections[$article['issueDatepublished']][$article['sectionAbbrev']] = $article['sectionTitle'];
 }
 
@@ -143,17 +150,21 @@ $fileId = 1;
 		fwrite ($xmlfile,"\t<issue xmlns=\"http://pkp.sfu.ca\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" published=\"1\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
 		
 		echo date('H:i:s') , " Adding issue with publishing date ", $article['issueDatepublished'] , EOL;
-		
+
+		# Issue description
+		if (!empty($article['issueDescription']))
+			fwrite ($xmlfile,"\t\t<description locale=\"".$defaultLocale."\"><![CDATA[".$article['issueDescription']."]]></description>\r\n");
+
 		# Issue identification
 		fwrite ($xmlfile,"\t\t<issue_identification>\r\n");
 		
-		if ($article['issueVolume'])
+		if (!empty($article['issueVolume']))
 			fwrite ($xmlfile,"\t\t\t<volume><![CDATA[".$article['issueVolume']."]]></volume>\r\n");	
-		if ($article['issueNumber'])
+		if (!empty($article['issueNumber']))
 			fwrite ($xmlfile,"\t\t\t<number><![CDATA[".$article['issueNumber']."]]></number>\r\n");			
 		fwrite ($xmlfile,"\t\t\t<year><![CDATA[".$article['issueYear']."]]></year>\r\n");
 		
-		if (isset($article['issueTitle'])){
+		if (!empty($article['issueTitle'])){
 			fwrite ($xmlfile,"\t\t\t<title><![CDATA[".$article['issueTitle']."]]></title>\r\n");
 		}
 		# Add alternative localisations for the issue title
@@ -193,38 +204,48 @@ $fileId = 1;
 	# Check if language has an alternative default locale
 	# If it does, use the locale in all fields
 	$articleLocale = $defaultLocale;
-	if (isset($article['language'])){
-		$articleLocale = $locales[$article['language']];
+	if (!empty($article['language'])){
+		$articleLocale = $locales[trim($article['language'])];
 	}
 	
 	fwrite ($xmlfile,"\t\t<article xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" stage=\"production\" date_submitted=\"".$article['issueDatepublished']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\">\r\n\r\n");
+
+		# DOI
+		if (!empty($article['doi'])){	
+			fwrite ($xmlfile,"\t\t\t<id type=\"doi\" advice=\"update\"><![CDATA[".$article['doi']."]]></id>\r\n");
+		}
 	
-		# Title, subtitle, Abstract
+		# title, prefix, subtitle, abstract
 		fwrite ($xmlfile,"\t\t\t<title locale=\"".$articleLocale."\"><![CDATA[".$article['title']."]]></title>\r\n");
 		fwrite ($xmlfile, searchLocalisations('title', $article, 3));
+
+		if (!empty($article['prefix'])){
+			fwrite ($xmlfile,"\t\t\t<prefix locale=\"".$articleLocale."\"><![CDATA[".$article['prefix']."]]></prefix>\r\n");
+		}
+		fwrite ($xmlfile, searchLocalisations('prefix', $article, 3));
 		
-		if (isset($article['subtitle'])){	
+		if (!empty($article['subtitle'])){	
 			fwrite ($xmlfile,"\t\t\t<subtitle locale=\"".$articleLocale."\"><![CDATA[".$article['subtitle']."]]></subtitle>\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('subtitle', $article, 3));
 		
-		if (isset($article['abstract'])){
+		if (!empty($article['abstract'])){
 			fwrite ($xmlfile,"\t\t\t<abstract locale=\"".$articleLocale."\"><![CDATA[".nl2br($article['abstract'])."]]></abstract>\r\n\r\n");
 		}
 		fwrite ($xmlfile, searchLocalisations('abstract', $article, 3));
 
-		if (isset($article['articleLicenseUrl'])) {
-			fwrite ($xmlfile,"\t\t\t<licenseUrl><![CDATA[".$article['articleLicenseUrl']."]]></licenseUrl>\r\n");
-		}
-		if (isset($article['articleCopyrightHolder'])) {
-			fwrite ($xmlfile,"\t\t\t<copyrightHolder locale=\"".$articleLocale."\"><![CDATA[".$article['articleCopyrightHolder']."]]></copyrightHolder>\r\n");
-		}
-		if (isset($article['articleCopyrightYear'])) {
-			fwrite ($xmlfile,"\t\t\t<copyrightYear><![CDATA[".$article['articleCopyrightYear']."]]></copyrightYear>\r\n");
+		if (!empty($article['articleLicenseUrl'])) {	
+			fwrite ($xmlfile,"\t\t\t<licenseUrl><![CDATA[".$article['articleLicenseUrl']."]]></licenseUrl>\r\n");	
+		}	
+		if (!empty($article['articleCopyrightHolder'])) {	
+			fwrite ($xmlfile,"\t\t\t<copyrightHolder locale=\"".$articleLocale."\"><![CDATA[".$article['articleCopyrightHolder']."]]></copyrightHolder>\r\n");	
+		}	
+		if (!empty($article['articleCopyrightYear'])) {	
+			fwrite ($xmlfile,"\t\t\t<copyrightYear><![CDATA[".$article['articleCopyrightYear']."]]></copyrightYear>\r\n");	
 		}
 
 		# Keywords
-		if (isset($article['keywords'])){
+		if (!empty($article['keywords'])){
 			if (trim($article['keywords']) != ""){
 				fwrite ($xmlfile,"\t\t\t<keywords locale=\"".$articleLocale."\">\r\n");
 				$keywords = explode(";", $article['keywords']);
@@ -238,7 +259,7 @@ $fileId = 1;
 
 
 		# Disciplines
-		if (isset($article['disciplines'])){
+		if (!empty($article['disciplines'])){
 			if (trim($article['disciplines']) != "") {
 				fwrite ($xmlfile,"\t\t\t<disciplines locale=\"".$articleLocale."\">\r\n");
 				$disciplines = explode(";", $article['disciplines']);
@@ -265,38 +286,38 @@ $fileId = 1;
 		
 		for ($i = 1; $i <= $maxAuthors; $i++) {
 			
-			if ($article['authorFirstname'.$i]){
+			if ($article['authorFirstname'.$i]) {
 				
 				if ($i == 1)
 					fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				else
 					fwrite ($xmlfile,"\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"Author\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$article['authorFirstname'.$i].(isset($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
-				if (isset($article['authorLastname'.$i])){
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$article['authorFirstname'.$i].(!empty($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
+				if (!empty($article['authorLastname'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$article['authorLastname'.$i]."]]></familyname>\r\n");
 				}
 
-				if (isset($article['authorAffiliation'.$i])){
+				if (!empty($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
 				}
 				fwrite ($xmlfile, searchLocalisations('authorAffiliation'.$i, $article, 5, 'affiliation'));
 
-				if (isset($article['country'.$i])){
+				if (!empty($article['country'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<country><![CDATA[".$article['country'.$i]."]]></country>\r\n");
 				}
 
-				if (isset($article['authorEmail'.$i])){
+				if (!empty($article['authorEmail'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<email>".$article['authorEmail'.$i]."</email>\r\n");
 				}
 				else{
 					fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				}
 
-				if (isset($article['orcid'.$i])){
+				if (!empty($article['orcid'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<orcid>".$article['orcid'.$i]."</orcid>\r\n");
 				}
-				if (isset($article['authorBio'.$i])){
+				if (!empty($article['authorBio'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t<biography locale=\"".$articleLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
 				}
 				
@@ -308,10 +329,9 @@ $fileId = 1;
 		}
 
 		# If no authors are given, use default author name
-		if (!$article['authorLastname1']){
+		if (!$article['authorFirstname1']){
 				fwrite ($xmlfile,"\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\">\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['firstname']."]]></givenname>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t\t<familyname><![CDATA[".$defaultAuthor['lastname']."]]></familyname>\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['givenname']."]]></givenname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t</author>\r\n");
 		}
@@ -357,7 +377,8 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t\t</revision>\r\n");				
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
 				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[trim($article['fileLocale'.$i])]."\">".$article['fileLabel'.$i]."</name>\r\n";
+
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t<submission_file_ref id=\"".$fileId."\" revision=\"1\"/>\r\n";
@@ -377,7 +398,7 @@ $fileId = 1;
 		
 		# Submission galleys
 		if (isset($galleys)){
-			foreach ($galleys as $key => $galley){
+			foreach ($galleys as $galley){
 				fwrite ($xmlfile,"\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
 				fwrite ($xmlfile, $galley);
 				fwrite ($xmlfile,"\t\t\t</article_galley>\r\n\r\n");				
@@ -385,7 +406,7 @@ $fileId = 1;
 		}
 	
 		# pages
-		if (isset($article['pages'])){	
+		if (!empty($article['pages'])){	
 			fwrite ($xmlfile,"\t\t\t<pages>".$article['pages']."</pages>\r\n\r\n");
 		}
 
@@ -472,29 +493,22 @@ function searchTaxonomyLocalisations($key, $key_singular, $input, $intend, $flag
 function createArray($sheet) {
 	$highestrow = $sheet->getHighestRow();
 	$highestcolumn = $sheet->getHighestColumn();
-	$columncount = PHPExcel_Cell::columnIndexFromString($highestcolumn);
-	$header = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
-	$body = $sheet->rangeToArray('A2:' . $highestcolumn . $highestrow);
-
+	$columncount = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestcolumn);
+	$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
+	$header = $headerRow[0];
+	array_unshift($header,"");
+	unset($header[0]);
 	$array = array();
 	for ($row = 2; $row <= $highestrow; $row++) {
 		$a = array();
-
-		for ($column = 0; $column <= $columncount - 1; $column++) {
-
-			if (strpos($header[0][$column], "bstract")) {
-
-					if ($sheet->getCellByColumnAndRow($column,$row)->getValue() instanceof PHPExcel_RichText) {
-
+		for ($column = 1; $column <= $columncount; $column++) {
+			if (strpos($header[$column], "bstract")) {
+					if ($sheet->getCellByColumnAndRow($column,$row)->getValue() instanceof \PhpOffice\PhpSpreadsheet\RichText\RichText) {
 						$value = $sheet->getCellByColumnAndRow($column,$row)->getValue();
-
             			$elements = $value->getRichTextElements();
-
             			$cellData = "";
-
 						foreach ($elements as $element) {
-
-						    if ($element instanceof PHPExcel_RichText_Run) {
+						    if ($element instanceof \PhpOffice\PhpSpreadsheet\RichText\Run) {
 						        if ($element->getFont()->getBold()) {
 						            $cellData .= '<b>';
 						        } elseif ($element->getFont()->getSubScript()) {
@@ -508,7 +522,7 @@ function createArray($sheet) {
 						    // Convert UTF8 data to PCDATA
 						    $cellText = $element->getText();
 						    $cellData .= htmlspecialchars($cellText);
-						    if ($element instanceof PHPExcel_RichText_Run) {
+						    if ($element instanceof \PhpOffice\PhpSpreadsheet\RichText\Run) {
 						        if ($element->getFont()->getBold()) {
 						            $cellData .= '</b>';
 						        } elseif ($element->getFont()->getSubScript()) {
@@ -520,75 +534,100 @@ function createArray($sheet) {
 						        }
 						    }
 						}
-
-						$a[$header[0][$column]] = $cellData;
-
+						$a[$header[$column]] = $cellData;
                 	}
                 	else{
-                		$a[$header[0][$column]] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
+                		$a[$header[$column]] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
                 	}
-
 			}
-
 			else {
-				$a[$header[0][$column]] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
+				$key = $header[$column];
+				$a[$key] = $sheet->getCellByColumnAndRow($column,$row)->getFormattedValue();
 			}
 		}
-
 		$array[$row] = $a;
 	}
 	
 	return $array;
-
 }
 
-# Function for searching empty values
-function emptyElementExists($arr) {
-	return array_search("", $arr) !== false;
+# Check the highest author number
+function countMaxAuthors($articles) {
+	$highestcolumn = $sheet->getHighestColumn();
+	$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
+	$header = $headerRow[0];
+	$authorFirstnameValues = array();
+	foreach ($header as $headerValue) {
+		if (strpos($headerValue, "authorFirstname")) {
+			$authorFirstnameValues[] = (int) trim(str_replace("authorFirstname", "", $headerValue));
+		}
+	}
+	return max($authorFirstnameValues);
 }
 
-# Function for sorting the data by pubdate
-function sortByIssueDate($a, $b) {
-	return strcasecmp($a['issueDatepublished'], $b['issueDatepublished']);
+# Check the highest file number
+function countMaxFiles($articles) {
+	$highestcolumn = $sheet->getHighestColumn();
+	$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
+	$header = $headerRow[0];
+	$fileValues = array();
+	foreach ($header as $headerValue) {
+		if (strpos($headerValue, "fileLabel")) {
+			$fileValues[] = (int) trim(str_replace("fileLabel", "", $headerValue));
+		}
+	}
+	return max($fileValues);
 }
 
 # Function for data validation
 function validateArticles($articles) {
-	
-	global $maxFiles, $filesFolder, $articleLocale;
+	global $filesFolder;
 	$errors = "";
-	
-	if (emptyElementExists(array_column($articles, 'issueYear'))){
-		$errors .= date('H:i:s') . " ERROR: Issue year missing" . EOL;
-		print_r(array_column($articles, 'issueYear'));
-	}
+	$articleRow = 0;
 
-	if (emptyElementExists(array_column($articles, 'issueDatepublished'))){
-		$errors .= date('H:i:s') . " ERROR: Issue publication date missing" . EOL;
-	}
+	foreach ($articles as $article) {
 
-	if (emptyElementExists(array_column($articles, 'title'))){
-		$errors .= date('H:i:s') . " ERROR: article title missing for the given default locale ". $articleLocale . EOL;
-	}
+			$articleRow++;
 
-	if (emptyElementExists(array_column($articles, 'sectionTitle'))){
-		$errors .= date('H:i:s') . " ERROR: section title missing for the given default locale " . $articleLocale . EOL;
-	}
+			if (empty($article['issueYear'])) {
+				$errors .= date('H:i:s') . " ERROR: Issue year missing for article " . $articleRow . EOL;
+			}
 
-	if (emptyElementExists(array_column($articles, 'sectionAbbrev'))){
-		$errors .= date('H:i:s') . " ERROR: section abbreviation missing for the given default locale " . $articleLocale . EOL;
-	}
+			if (empty($article['issueDatepublished'])) {
+				$errors .= date('H:i:s') . " ERROR: Issue publication date missing for article " . $articleRow . EOL;
+			}
 
-	foreach ($articles as $key => $article){
-						
-			for ($i = 1; $i <= $maxFiles; $i++) {
+			if (empty($article['title'])) {
+				$errors .= date('H:i:s') . " ERROR: article title missing for the given default locale for article " . $articleRow . EOL;
+			}
+
+			if (empty($article['sectionTitle'])) {
+				$errors .= date('H:i:s') . " ERROR: section title missing for the given default locale for article " . $articleRow . EOL;
+			}
+
+			if (empty($article['sectionAbbrev'])) {
+				$errors .= date('H:i:s') . " ERROR: section abbreviation missing for the given default locale for article " . $articleRow . EOL;
+			}
+
+			for ($i = 1; $i <= 200; $i++) {
 
 				if ($article['file'.$i] && !preg_match("@^https?://@", $article['file'.$i]) ) {
 
 					$fileCheck = $filesFolder.$article['file'.$i]; 
 
 					if (!file_exists($fileCheck)) 
-						$errors .= date('H:i:s') . " ERROR: file missing " . $fileCheck . EOL;
+						$errors .= date('H:i:s') . " ERROR: file ".$i." missing " . $fileCheck . EOL;
+
+					$fileLabelColumn = 'fileLabel'.$i;
+					if (empty($fileLabelColumn)) {
+						$errors .= date('H:i:s') . " ERROR: fileLabel ".$i." missing for article " . $articleRow . EOL;
+					}
+					$fileLocaleColumns = 'fileLocale'.$i;
+					if (empty($fileLocaleColumns)) {
+						$errors .= date('H:i:s') . " ERROR: fileLocale ".$i."  missingfor article " . $articleRow . EOL;
+					}
+				} else {
+					break;
 				}
 			}	
 	}

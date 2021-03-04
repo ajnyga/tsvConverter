@@ -1,38 +1,34 @@
 # Excel to OJS3 XML conversion tool
 
-## Licence
-The conversion tool is distributed under the GNU GPL v2.
+## Installation
 
-The conversion tool uses the PHPExcel library. PHPExcel is licensed under [LGPL (GNU LESSER GENERAL PUBLIC LICENSE)](https://github.com/PHPOffice/PHPExcel/blob/master/license.md)
+Install or update dependencies via Composer (https://getcomposer.org/):
 
-## Changes in version 1.1.0.12 (Dec 2018)
-- Support multilingual keywords
-
-## Changes in version 1.1.0.11 (Nov 2018)
-- Support remote galleys
-
-## Changes in version 1.1.0.8 (Sep 2018)
-- Support rich text in abstract fields
-
-## Changes in version 1.1.0.7 (Sep 2018)
-- Support for keywords and disciplines, authorEmail and authorMiddlename
-- better support for articles in alternative locales, see below
-
-## Todo
-PHPExcel is deprecated, [PhpSpreadsheet](https://github.com/PHPOffice/PhpSpreadsheet) should be used instead.
+    composer install
 
 ## Usage 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
 
 This release uses the OJS 3.x schema for 3.1.2 and later.
 
-Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected. 
+Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected.
 
+Usage:
+    php convert.php sheetFilename filesFolderName [-v]
+
+Convert:
+    php convert.php filename.xlsx files
+
+Only validate:
+    php convert.php filename.xlsx files -v
+
+
+### Step by step instructions
 1. Create an Excel file containing the article data. See the details below and the "example.xlsx" file. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
-3. Move the Excel file to the same folder with the conversion script. Move the full text files to a "files" folder below the conversion script.
-4. Edit "convert.php" file and change the settings in the beginning to match your needs.
-5. Run "php convert.php". The script will create one XML per year.
+3. Move the Excel file to the same folder with the conversion script. Move the full text files to a folder named "files" below the conversion script.
+4. Run *php convert.php example.xlsx files*
+5. The script will create one XML per year.
 
 ## Article
 | Field | Description |  Required|
@@ -47,8 +43,9 @@ Before importing the created data to your production server, you should try to i
 | keywords| Word 1; Word 2; Word3 |  |
 | disciplines| History; Political science; Astronomy |  |
 | articleCopyrightYear| 2005 |  |
-| articleCopyrightHolder| "Institute of Something" |  |
+| articleCopyrightHolder| "John Doe" |  |
 | articleLicenseUrl| http://creativecommons.org/licenses/by/4.0 |  |
+| doi| "10.1234/art.182" |  |
 
 ## Issue
 | Field | Description |  Required|
@@ -59,8 +56,8 @@ Before importing the created data to your production server, you should try to i
 | issueYear |  Issue year | x |
 | issueTitle |  Issue title |  |
 | sectionTitle |  Section title, eg. "Articles" | x  |
-| sectionAbbrev |  Section abbreviation, eg. "ART" | x  |                    
-                    
+| sectionAbbrev |  Section abbreviation, eg. "ART" | x  |
+
 ## Multiplied fields
 An article can have multiple authors or full text files. Every article has to have at least one author and one file.
 
@@ -99,4 +96,30 @@ en - English
 sv - Swedish
 fr - French
 de - German
+
+## Licence
+The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.2.2.0 (Mar 2021)
+- Support OJS 3.3
+
+## Changes in version 1.2.1.0 (Mar 2021)
+- Support OJS 3.2
+
+## Changes in version 1.2.0.0 (Mar 2021)
+- Use PhpSpreadsheet (https://github.com/PHPOffice/PhpSpreadsheet) and Composer
+- Use GPL v3
+
+## Changes in version 1.1.0.12 (Dec 2018)
+- Support multilingual keywords
+
+## Changes in version 1.1.0.11 (Nov 2018)
+- Support remote galleys
+
+## Changes in version 1.1.0.8 (Sep 2018)
+- Support rich text in abstract fields
+
+## Changes in version 1.1.0.7 (Sep 2018)
+- Support for keywords and disciplines, authorEmail and authorMiddlename
+- better support for articles in alternative locales
 
