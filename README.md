@@ -1,26 +1,34 @@
 # Excel to OJS3 XML conversion tool
 
+This release uses the OJS schema for 3.1.2.
+
+The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
+
 ## Installation
 
-Install or update dependencies via Composer (https://getcomposer.org/):
+Download and unzip the tsvConverter.
+
+Make sure you can run php from command line.
+
+Go to the tsvConverter folder and install or update dependencies via Composer (https://getcomposer.org/). The conversion tool uses https://github.com/PHPOffice/PhpSpreadsheet for reading sheets.
 
     composer install
 
 ## Usage 
-The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of six journals during 2017. Feel free to use and develop further.
 
-This release uses the OJS 3.x schema for 3.1.2 and later.
-
-Before importing the created data to your production server, you should try to import the data to a test environment to ensure that the created XML files work as expected.
+Before importing the created data to your production server, **you should try to import the data to a test environment to ensure that the created XML files work as expected**.
 
 Usage:
-    php convert.php sheetFilename filesFolderName [-v]
+
+	php convert.php sheetFilename filesFolderName [-v]
 
 Convert:
-    php convert.php filename.xlsx files
 
-Only validate:
-    php convert.php filename.xlsx files -v
+	php convert.php filename.xlsx files
+
+Only validate by adding -v:
+
+	php convert.php filename.xlsx files -v
 
 
 ### Step by step instructions
