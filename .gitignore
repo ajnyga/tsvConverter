@@ -1,3 +1,11 @@
-*.xml
-vendor/*
-.DS_Store
+*
+!.gitignore
+!composer.lock
+!composer.json
+!composer.json
+!README.md
+!exampleAdvanced.xlsx
+!exampleMinimal.xlsx
+!convert.php
+!LICENSE
+!exampleFiles/*
