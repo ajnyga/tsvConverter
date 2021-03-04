@@ -20,6 +20,7 @@ if (isset($argv[3]) && $argv[3] == '-v') {
 	$onlyValidate = 1;
 }
 
+
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
 $defaultLocale = 'en_US';
 
@@ -56,6 +57,20 @@ define('EOL',(PHP_SAPI == 'cli') ? PHP_EOL : '<br />');
 require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+/* 
+ * Check that a file and a folder exists
+ * ------------------------------------
+ */
+if (!file_exists($fileName)) {
+	echo date('H:i:s') . " ERROR: given file does not exist" . EOL;
+	die();
+}
+
+if (!file_exists($filesFolder)) {
+	echo date('H:i:s') . " ERROR: given folder does not exist" . EOL;
+	die();
+}
 
 /* 
  * Load Excel data to an array
@@ -502,7 +517,7 @@ function createArray($sheet) {
 	for ($row = 2; $row <= $highestrow; $row++) {
 		$a = array();
 		for ($column = 1; $column <= $columncount; $column++) {
-			if (strpos($header[$column], "bstract")) {
+			if (strpos($header[$column], "bstract") !== false) {
 					if ($sheet->getCellByColumnAndRow($column,$row)->getValue() instanceof \PhpOffice\PhpSpreadsheet\RichText\RichText) {
 						$value = $sheet->getCellByColumnAndRow($column,$row)->getValue();
             			$elements = $value->getRichTextElements();
@@ -552,13 +567,13 @@ function createArray($sheet) {
 }
 
 # Check the highest author number
-function countMaxAuthors($articles) {
+function countMaxAuthors($sheet) {
 	$highestcolumn = $sheet->getHighestColumn();
 	$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
 	$header = $headerRow[0];
 	$authorFirstnameValues = array();
 	foreach ($header as $headerValue) {
-		if (strpos($headerValue, "authorFirstname")) {
+		if (strpos($headerValue, "authorFirstname") !== false) {
 			$authorFirstnameValues[] = (int) trim(str_replace("authorFirstname", "", $headerValue));
 		}
 	}
@@ -566,13 +581,13 @@ function countMaxAuthors($articles) {
 }
 
 # Check the highest file number
-function countMaxFiles($articles) {
+function countMaxFiles($sheet) {
 	$highestcolumn = $sheet->getHighestColumn();
 	$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
 	$header = $headerRow[0];
 	$fileValues = array();
 	foreach ($header as $headerValue) {
-		if (strpos($headerValue, "fileLabel")) {
+		if (strpos($headerValue, "fileLabel") !== false) {
 			$fileValues[] = (int) trim(str_replace("fileLabel", "", $headerValue));
 		}
 	}
