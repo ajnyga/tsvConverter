@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-This release uses the OJS schema for 3.1.2.
+Version 1.3.0.0 supports the schema for OJS 3.2.1.
 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
 
@@ -24,18 +24,18 @@ Usage:
 
 Convert:
 
-	php convert.php filename.xlsx files
+	php convert.php sheetFilename filesFolderName
 
 Only validate by adding -v:
 
-	php convert.php filename.xlsx files -v
+	php convert.php sheetFilename filesFolderName -v
 
 
 ### Step by step instructions
-1. Create an Excel file containing the article data. See the details below and the "example.xlsx" file. The metadata of each article is in one row. The order of the columns does not matter. 
+1. Create an Excel file containing the article data. See the details below and the "exampleMinimal.xlsx" and "exampleAdvanced.xlsx" files. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
 3. Move the Excel file to the same folder with the conversion script. Move the full text files to a folder named "files" below the conversion script.
-4. Run *php convert.php example.xlsx files*
+4. Run *php convert.php exampleMinimal.xlsx files*
 5. The script will create one XML per year.
 
 ## Article
@@ -47,7 +47,7 @@ Only validate by adding -v:
 | abstract|  Article abstract |   |
 | seq |  Article sequence inside an issue, first article '1' | x  |
 | pages| For example "23-45"  |  |
-| language| Article language "en", "fi", "sv", "de", "fr"  |  |
+| language| Article language "en", "fi", "sv", "de", "fr"  | x |
 | keywords| Word 1; Word 2; Word3 |  |
 | disciplines| History; Political science; Astronomy |  |
 | articleCopyrightYear| 2005 |  |
@@ -107,6 +107,9 @@ de - German
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.3.0.0 (Mar 2021)
+- Support OJS 3.2
 
 ## Changes in version 1.2.0.0 (Mar 2021)
 - Use PhpSpreadsheet (https://github.com/PHPOffice/PhpSpreadsheet) and Composer

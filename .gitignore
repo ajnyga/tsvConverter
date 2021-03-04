@@ -1,5 +1,3 @@
 *.xml
-files/*
 vendor/*
-!files/.gitkeep
 .DS_Store
