@@ -359,7 +359,13 @@ $fileId = 1;
 		$fileSeq = 0;
 		
 		for ($i = 1; $i <= $maxFiles; $i++) {
-			
+
+			if (empty($article['fileLocale'.$i])) {
+				$fileLocale = $articleLocale;
+			} else {
+				$fileLocale = $locales[trim($article['fileLocale'.$i])];
+			}
+
 			if (!preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 					
 				$file = $filesFolder.$article['file'.$i];
@@ -392,7 +398,7 @@ $fileId = 1;
 				fwrite ($xmlfile,"\t\t\t\t</revision>\r\n");				
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
 				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[trim($article['fileLocale'.$i])]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
@@ -403,7 +409,7 @@ $fileId = 1;
 			}
 			if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 				# save remote galley data
-				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] = "\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 4, 'name');
 				$galleys[$fileId] .= "\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
