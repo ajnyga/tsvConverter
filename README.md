@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.3.0.0 supports the schema for OJS 3.2.1.
+Version 1.3.1.0 supports the schema for OJS 3.2.1.
 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
 
@@ -108,7 +108,7 @@ de - German
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
 
-## Changes in version 1.3.0.0 (Mar 2021)
+## Changes in version 1.3.1.0 (Mar 2021)
 - Support OJS 3.2
 
 ## Changes in version 1.2.0.0 (Mar 2021)
