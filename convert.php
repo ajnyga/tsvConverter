@@ -239,6 +239,12 @@ $submissionId = 1;
 		$fileSeq = 0;
 
 		for ($i = 1; $i <= $maxFiles; $i++) {
+
+			if (empty($article['fileLocale'.$i])) {
+				$fileLocale = $articleLocale;
+			} else {
+				$fileLocale = $locales[trim($article['fileLocale'.$i])];
+			}
 			
 			if (!preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 					
@@ -274,7 +280,7 @@ $submissionId = 1;
 
 				# save galley data
 				$galleys[$fileId] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$locales[trim($article['fileLocale'.$i])]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
 				$galleys[$fileId] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
@@ -286,7 +292,7 @@ $submissionId = 1;
 			if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 				# save remote galley data
 				$galleys[$fileId] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
 				$galleys[$fileId] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
 				$galleys[$fileId] .= "\t\t\t\t\t<remote src=\"" . trim(htmlentities($article['file'.$i], ENT_XML1)) . "\" />\r\n";
