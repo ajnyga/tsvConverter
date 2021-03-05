@@ -262,9 +262,9 @@ $submissionId = 1;
 				if (empty($article['fileGenre'.$i]))
 					$article['fileGenre'.$i] = "Article Text";
 				
-				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".trim($article['fileGenre'.$i])."\" filename=\"".trim($article['file'.$i])."\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<revision number=\"1\" genre=\"".trim($article['fileGenre'.$i])."\" filename=\"". trim(htmlentities($article['file'.$i], ENT_XML1)) . "\" filesize=\"".$fileSize."\" filetype=\"".$fileType."\" uploader=\"".$uploader."\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">".trim($article['file'.$i])."</name>\r\n");				
+				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">". trim(htmlentities($article['file'.$i], ENT_XML1)) ."</name>\r\n");				
 				fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
 				fwrite ($xmlfile, base64_encode($fileContents));
 				fwrite ($xmlfile,"\t\t\t\t</embed>\r\n");
@@ -289,7 +289,7 @@ $submissionId = 1;
 				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$locales[$article['fileLocale'.$i]]."\">".$article['fileLabel'.$i]."</name>\r\n";
 				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
 				$galleys[$fileId] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<remote src=\"" . $article['file'.$i] . "\" />\r\n";
+				$galleys[$fileId] .= "\t\t\t\t\t<remote src=\"" . trim(htmlentities($article['file'.$i], ENT_XML1)) . "\" />\r\n";
 				$galleys[$fileId] .= "\t\t\t\t</article_galley>\r\n\r\n";
 			}
 			$fileSeq++;
