@@ -604,7 +604,7 @@ function countMaxFiles($sheet) {
 function validateArticles($articles) {
 	global $filesFolder;
 	$errors = "";
-	$articleRow = 0;
+	$articleRow = 1;
 
 	foreach ($articles as $article) {
 
@@ -632,7 +632,7 @@ function validateArticles($articles) {
 
 			for ($i = 1; $i <= 200; $i++) {
 
-				if ($article['file'.$i] && !preg_match("@^https?://@", $article['file'.$i]) ) {
+				if (!empty($article['file'.$i]) && !preg_match("@^https?://@", $article['file'.$i]) ) {
 
 					$fileCheck = $filesFolder.$article['file'.$i]; 
 
