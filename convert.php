@@ -22,7 +22,7 @@ if (isset($argv[3]) && $argv[3] == '-v') {
 
 
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
-$defaultLocale = 'en_US';
+$defaultLocale = 'fi_FI';
 
 // The uploader account name
 $uploader = "admin";
