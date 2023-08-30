@@ -27,14 +27,14 @@ if (isset($argv[3]) && $argv[3] == '-v') {
 }
 
 // The default locale. For alternative locales use language field. For additional locales use locale:fieldName.
-$defaultLocale = 'sv_SE';
+$defaultLocale = 'de_DE';
 
 // The uploader account name
 $uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
-$defaultAuthor['givenname'] = "Redaktionen";
-$defaultUserGroupRef = "Author";
+$defaultAuthor['givenname'] = "Editorial Board";
+$defaultUserGroupRef = "Author"; // de_DE => Autor/in; sv_SE => F&#xF6;rfattare
 
 // Location of full text files
 $filesFolder = dirname(__FILE__) . "/". $files ."/";
@@ -54,7 +54,7 @@ $locales = array(
 			);
 
 // PHPExcel settings
-error_reporting(E_ALL);
+// error_reporting(E_ALL);
 ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
 date_default_timezone_set('Europe/Helsinki');
@@ -127,7 +127,6 @@ foreach ($articles as $article){
 	$sections[$article['issueDatepublished']][$article['sectionAbbrev']] = $article['sectionTitle'];
 }
 
-
 /* 
  * Create XML  
  * --------------------
@@ -136,9 +135,10 @@ foreach ($articles as $article){
 echo date('H:i:s') , " Starting XML output" , EOL;
 $currentIssueDatepublished = null;	
 $currentYear = null;
-$fileId = 1;
+$submission_file_id = 1;
 $authorId = 1;
 $submissionId = 1;
+$file_id = 1;
 
 	foreach ($articles as $key => $article){
 	
@@ -201,7 +201,7 @@ $submissionId = 1;
 		fwrite ($xmlfile,"\t\t<sections>\r\n");
 		    
 			foreach ($sections[$article['issueDatepublished']] as $sectionAbbrev => $sectionTitle){
-				fwrite ($xmlfile,"\t\t\t<section ref=\"".htmlentities($sectionAbbrev, ENT_XML1)."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t<section ref=\"".htmlentities($sectionAbbrev, ENT_XML1)."\" seq=\"".htmlentities("0", ENT_XML1)."\">\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<abbrev locale=\"".$defaultLocale."\">".htmlentities($sectionAbbrev, ENT_XML1)."</abbrev>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t<title locale=\"".$defaultLocale."\"><![CDATA[".$sectionTitle."]]></title>\r\n");
 				fwrite ($xmlfile, searchLocalisations('sectionTitle', $article, 3));
@@ -261,17 +261,17 @@ $submissionId = 1;
 				else {
 					echo date('H:i:s') , " ERROR: You need to enable fileinfo or mime_magic extension.", EOL;
 				}
+				$fileExtension = pathinfo($file)['extension'];
 				
 				$fileContents = file_get_contents ($file);
 				
-				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\" genre=\"".$article['fileGenre1']."\" file_id=\"".$fileId."\" id=\"".$fileId."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n");
-
+				fwrite ($xmlfile,"\t\t\t<submission_file xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" stage=\"proof\"  id=\"".$submission_file_id."\" file_id=\"".$file_id."\" uploader=\"".$uploader."\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\" genre=\"".trim($article['fileGenre'.$i])."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">". trim(htmlentities($article['file'.$i], ENT_XML1)) ."</name>\r\n");
 				if (empty($article['fileGenre'.$i]))
 					$article['fileGenre'.$i] = "Article Text";
 				
+				fwrite ($xmlfile,"\t\t\t\t<file id=\"".$file_id."\" filesize=\"".$fileSize."\" extension=\"".$fileExtension."\">\r\n");
 				
-				fwrite ($xmlfile,"\t\t\t\t<name locale=\"".$articleLocale."\">". trim(htmlentities($article['file'.$i], ENT_XML1)) ."</name>\r\n");
-				fwrite ($xmlfile,"\t\t\t\t<file id=\"".$fileId."\" filesize=\"".$fileSize."\" extension=\"pdf\">\r\n");				
 				fwrite ($xmlfile,"\t\t\t\t<embed encoding=\"base64\">");
 				fwrite ($xmlfile, base64_encode($fileContents));
 				fwrite ($xmlfile,"\t\t\t\t</embed>\r\n");
@@ -280,31 +280,31 @@ $submissionId = 1;
 				fwrite ($xmlfile,"\t\t\t</submission_file>\r\n\r\n");
 
 				# save galley data
-				$galleys[$fileId] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\"  xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
-				# $galleys[$fileId] .= "\t\t\t\t\t<id type=\"internal\" advice=\"ignore\">".$fileId."</id>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$submission_file_id] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
 
-				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
-				$galleys[$fileId] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<submission_file_ref id=\"".$fileId."\"/>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t</article_galley>\r\n\r\n";
+				$galleys[$submission_file_id] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<submission_file_ref id=\"".$submission_file_id."\"/>\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t</article_galley>\r\n\r\n";
 
-				$fileId++;
+				$submission_file_id++;
 			}
 			if (preg_match("@^https?://@", $article['file'.$i]) && $article['file'.$i] != "") {
 				# save remote galley data
-				$galleys[$fileId] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
-				$galleys[$fileId] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
-				$galleys[$fileId] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
-				$galleys[$fileId] .= "\t\t\t\t\t<remote src=\"" . trim(htmlentities($article['file'.$i], ENT_XML1)) . "\" />\r\n";
-				$galleys[$fileId] .= "\t\t\t\t</article_galley>\r\n\r\n";
+				$galleys[$submission_file_id] = "\t\t\t\t<article_galley xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$locales[trim($article['fileLocale'.$i])]."\" approved=\"false\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<name locale=\"".$fileLocale."\">".$article['fileLabel'.$i]."</name>\r\n";
+				$galleys[$submission_file_id] .= searchLocalisations('fileLabel'.$i, $article, 5, 'name');
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<seq>".$fileSeq."</seq>\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t\t<remote src=\"" . trim(htmlentities($article['file'.$i], ENT_XML1)) . "\" />\r\n";
+				$galleys[$submission_file_id] .= "\t\t\t\t</article_galley>\r\n\r\n";
 			}
 			$fileSeq++;
+			$file_id++;
 		}
 
 		# Publication
-		fwrite ($xmlfile,"\t\t\t<publication xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" version=\"1\" status=\"3\" primary_contact_id=\"".$authorId."\" url_path=\"\" seq=\"0\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\" access_status=\"0\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
+		fwrite ($xmlfile,"\t\t\t<publication xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" version=\"1\" status=\"3\" primary_contact_id=\"".$authorId."\" url_path=\"\" seq=\"".$article['articleSeq']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\" access_status=\"0\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
 		fwrite ($xmlfile,"\t\t\t\t<id type=\"internal\" advice=\"ignore\">".$submissionId."</id>\r\n\r\n");
 
 		# DOI
@@ -385,7 +385,7 @@ $submissionId = 1;
 			
 			if ($article['authorFirstname'.$i]) {
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"".$defaultUserGroupRef."\" seq=\"0\" id=\"".$authorId."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"".$defaultUserGroupRef."\" seq=\"".$i."\" id=\"".$authorId."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t\t\t<givenname locale=\"".$articleLocale."\"><![CDATA[".$article['authorFirstname'.$i].(!empty($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
 				if (!empty($article['authorLastname'.$i])){
@@ -424,7 +424,7 @@ $submissionId = 1;
 
 		# If no authors are given, use default author name
 		if (!$article['authorFirstname1']){
-				fwrite ($xmlfile,"\t\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"Author\"  seq=\"0\" id=\"".$authorId."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"".$defaultUserGroupRef."\"  seq=\"0\" id=\"".$authorId."\">\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['givenname']."]]></givenname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t</author>\r\n");
@@ -448,7 +448,7 @@ $submissionId = 1;
 		$submissionId++;
 		fwrite ($xmlfile,"\t\t\t</publication>\r\n\r\n");
 		fwrite ($xmlfile,"\t\t</article>\r\n\r\n");
-	}	
+	}
 
 	# After exiting the loop close the last XML file
 	echo date('H:i:s') , " Closing XML file" , EOL;
@@ -592,7 +592,7 @@ function countMaxAuthors($sheet) {
 	$header = $headerRow[0];
 	$authorFirstnameValues = array();
 	foreach ($header as $headerValue) {
-		if (strpos($headerValue, "authorFirstname") !== false) {
+		if ($headerValue && strpos($headerValue, "authorFirstname") !== false) {
 			$authorFirstnameValues[] = (int) trim(str_replace("authorFirstname", "", $headerValue));
 		}
 	}
@@ -606,7 +606,7 @@ function countMaxFiles($sheet) {
 	$header = $headerRow[0];
 	$fileValues = array();
 	foreach ($header as $headerValue) {
-		if (strpos($headerValue, "fileLabel") !== false) {
+		if ($headerValue && strpos($headerValue, "fileLabel") !== false) {
 			$fileValues[] = (int) trim(str_replace("fileLabel", "", $headerValue));
 		}
 	}
