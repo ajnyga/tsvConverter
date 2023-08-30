@@ -34,7 +34,13 @@ $uploader = "admin";
 
 // Default author name. If no author is given for an article, this name is used instead.
 $defaultAuthor['givenname'] = "Editorial Board";
-$defaultUserGroupRef = "Author"; // de_DE => Autor/in; sv_SE => F&#xF6;rfattare
+
+// Default user group (localized)
+$defaultUserGroupRef = array(
+							'en_US' => 'Author',
+							'de_DE' => 'Autor/in',
+							'sv_SE' => 'F&#xF6;rfattare'
+						);
 
 // Location of full text files
 $filesFolder = dirname(__FILE__) . "/". $files ."/";
@@ -304,7 +310,11 @@ $file_id = 1;
 		}
 
 		# Publication
-		fwrite ($xmlfile,"\t\t\t<publication xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" version=\"1\" status=\"3\" primary_contact_id=\"".$authorId."\" url_path=\"\" seq=\"".$article['articleSeq']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\" access_status=\"0\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
+		if (array_key_exists('articleSeq', $article)) {
+			fwrite ($xmlfile,"\t\t\t<publication xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" version=\"1\" status=\"3\" primary_contact_id=\"".$authorId."\" url_path=\"\" seq=\"".$article['articleSeq']."\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\" access_status=\"0\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
+		} else {
+			fwrite ($xmlfile,"\t\t\t<publication xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" locale=\"".$articleLocale."\" version=\"1\" status=\"3\" primary_contact_id=\"".$authorId."\" url_path=\"\" date_published=\"".$article['issueDatepublished']."\" section_ref=\"".htmlentities($article['sectionAbbrev'], ENT_XML1)."\" access_status=\"0\" xsi:schemaLocation=\"http://pkp.sfu.ca native.xsd\">\r\n\r\n");
+		}
 		fwrite ($xmlfile,"\t\t\t\t<id type=\"internal\" advice=\"ignore\">".$submissionId."</id>\r\n\r\n");
 
 		# DOI
@@ -385,7 +395,7 @@ $file_id = 1;
 			
 			if ($article['authorFirstname'.$i]) {
 				
-				fwrite ($xmlfile,"\t\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"".$defaultUserGroupRef."\" seq=\"".$i."\" id=\"".$authorId."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"".$defaultUserGroupRef[$defaultLocale]."\" seq=\"".$i."\" id=\"".$authorId."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t\t\t<givenname locale=\"".$articleLocale."\"><![CDATA[".$article['authorFirstname'.$i].(!empty($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
 				if (!empty($article['authorLastname'.$i])){
@@ -424,7 +434,7 @@ $file_id = 1;
 
 		# If no authors are given, use default author name
 		if (!$article['authorFirstname1']){
-				fwrite ($xmlfile,"\t\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"".$defaultUserGroupRef."\"  seq=\"0\" id=\"".$authorId."\">\r\n");
+				fwrite ($xmlfile,"\t\t\t\t\t<author primary_contact=\"true\" user_group_ref=\"".$defaultUserGroupRef[$defaultLocale]."\"  seq=\"0\" id=\"".$authorId."\">\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t\t<givenname><![CDATA[".$defaultAuthor['givenname']."]]></givenname>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t\t<email><![CDATA[]]></email>\r\n");
 				fwrite ($xmlfile,"\t\t\t\t\t</author>\r\n");
