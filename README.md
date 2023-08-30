@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.3.1.0 supports the schema for OJS 3.2.1.
+Version 1.4.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-14, Aug 2023)
 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
 
@@ -45,7 +45,7 @@ Only validate by adding -v:
 | title |  Article title | x |
 | subTitle |  Article subtitle |   |
 | abstract|  Article abstract |   |
-| seq |  Article sequence inside an issue, first article '1' | x  |
+| articleSeq |  Article sequence inside an issue, first article '1' | x  |
 | pages| For example "23-45"  |  |
 | language| Article language "en", "fi", "sv", "de", "fr"  | x |
 | keywords| Word 1; Word 2; Word3 |  |
@@ -107,6 +107,9 @@ de - German
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.4.0.0 (Aug 2023)
+- Support OJS 3.3
 
 ## Changes in version 1.3.1.0 (Mar 2021)
 - Support OJS 3.2
