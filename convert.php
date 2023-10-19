@@ -398,9 +398,12 @@ $file_id = 1;
 				fwrite ($xmlfile,"\t\t\t\t\t<author include_in_browse=\"true\" user_group_ref=\"".$defaultUserGroupRef[$defaultLocale]."\" seq=\"".$i."\" id=\"".$authorId."\">\r\n");
 				
 				fwrite ($xmlfile,"\t\t\t\t\t\t<givenname locale=\"".$articleLocale."\"><![CDATA[".$article['authorFirstname'.$i].(!empty($article['authorMiddlename'.$i]) ? ' '.$article['authorMiddlename'.$i] : '')."]]></givenname>\r\n");
+				fwrite ($xmlfile, searchLocalisations('authorFirstname'.$i, $article, 6, 'givenname'));
+
 				if (!empty($article['authorLastname'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t\t<familyname locale=\"".$articleLocale."\"><![CDATA[".$article['authorLastname'.$i]."]]></familyname>\r\n");
 				}
+				fwrite ($xmlfile, searchLocalisations('authorLastname'.$i, $article, 6, 'familyname'));
 
 				if (!empty($article['authorAffiliation'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t\t<affiliation locale=\"".$articleLocale."\"><![CDATA[".$article['authorAffiliation'.$i]."]]></affiliation>\r\n");
@@ -424,7 +427,8 @@ $file_id = 1;
 				if (!empty($article['authorBio'.$i])){
 					fwrite ($xmlfile,"\t\t\t\t\t\t<biography locale=\"".$articleLocale."\"><![CDATA[".$article['authorBio'.$i]."]]></biography>\r\n");
 				}
-				
+				fwrite ($xmlfile, searchLocalisations('authorBio'.$i, $article, 6, 'biography'));
+
 				fwrite ($xmlfile,"\t\t\t\t\t</author>\r\n");
 
 				
