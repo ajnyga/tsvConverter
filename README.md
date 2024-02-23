@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.4.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-14, Aug 2023)
+Version 1.3.1.0 supports the schema for OJS 3.2.1.
 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
 
@@ -39,32 +39,32 @@ Only validate by adding -v:
 5. The script will create one XML per year.
 
 ## Article
-| Field | Description |  Required| Multilingual Support|
-|----------|:--------:|:--------:|:--------:|
-| prefix |  "The", "A" |  | x |   |
-| title |  Article title | x | x |
-| subTitle |  Article subtitle |   | x |
-| abstract|  Article abstract |   | x |
-| articleSeq |  Article sequence inside an issue, first article '1' | x  |   |
-| pages| For example "23-45"  |  |   |
-| language| Article language "en", "fi", "sv", "de", "fr"  | x |   |
-| keywords| Word 1; Word 2; Word3 |  | x |
-| disciplines| History; Political science; Astronomy |  | x |
-| articleCopyrightYear| 2005 |  |   |
-| articleCopyrightHolder| "John Doe" |  |   |
-| articleLicenseUrl| http://creativecommons.org/licenses/by/4.0 |  |   |
-| doi| "10.1234/art.182" |  |   |
+| Field | Description |  Required|
+|----------|:--------:|:--------:|
+| prefix |  "The", "A" |  |
+| title |  Article title | x |
+| subTitle |  Article subtitle |   |
+| abstract|  Article abstract |   |
+| seq |  Article sequence inside an issue, first article '1' | x  |
+| pages| For example "23-45"  |  |
+| language| Article language "en", "fi", "sv", "de", "fr"  | x |
+| keywords| Word 1; Word 2; Word3 |  |
+| disciplines| History; Political science; Astronomy |  |
+| articleCopyrightYear| 2005 |  |
+| articleCopyrightHolder| "John Doe" |  |
+| articleLicenseUrl| http://creativecommons.org/licenses/by/4.0 |  |
+| doi| "10.1234/art.182" |  |
 
 ## Issue
-| Field | Description |  Required| Multilingual Support|
-|----------|:--------:|:--------:|:--------:|
-| issueDatepublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |   |
-| issueVolume |  Issue volume |  |   |
-| issueNumber |  Issue number |  |   |
-| issueYear |  Issue year | x |   |
-| issueTitle |  Issue title |  | x |
-| sectionTitle |  Section title, eg. "Articles" | x  | x |
-| sectionAbbrev |  Section abbreviation, eg. "ART" | x  |   |
+| Field | Description |  Required|
+|----------|:--------:|:--------:|
+| issueDatepublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |
+| issueVolume |  Issue volume |  |
+| issueNumber |  Issue number |  |
+| issueYear |  Issue year | x |
+| issueTitle |  Issue title |  |
+| sectionTitle |  Section title, eg. "Articles" | x  |
+| sectionAbbrev |  Section abbreviation, eg. "ART" | x  |
 
 ## Multiplied fields
 An article can have multiple authors or full text files. Every article has to have at least one author and one file.
@@ -72,24 +72,24 @@ An article can have multiple authors or full text files. Every article has to ha
 If an article has for example three authors, the excel file should include columns for each author with the number behind the column name changing. The first name of the third author will be saved to a field called *authorFirstname3*.
 
 ### Authors
-| Field | Description |  Required| Multilingual Support|
-|----------|:--------:|:--------:|:--------:|
-| authorFirstname1|  Given name | x | x |
-| authorMiddlename1|  Middle name |  |   |
-| authorLastname1|  Family name |   | x |
-| authorEmail1|  Email |  |   |
-| authorAffiliation1|  Affiliation |   | x |
-| country1|  "FI", "SE", "DK", "CA", "US" |   |   |
-| orcid1|  Orcid ID, should include "https://". Note that adding Orcid ID's this way is not recommended by Orcid. |   |   |
-| authorBio1|  Biography |   | x |
+| Field | Description |  Required|
+|----------|:--------:|:--------:|
+| authorFirstname1|  Given name | x |
+| authorMiddlename1|  Middle name |  |
+| authorLastname1|  Family name |   |
+| authorEmail1|  Email |  |
+| authorAffiliation1|  Affiliation |   |
+| country1|  "FI", "SE", "DK", "CA", "US" |   |
+| orcid1|  Orcid ID, should include "https://". Note that adding Orcid ID's this way is not recommended by Orcid. |   |
+| authorBio1|  Biography |   |
 
 ### Files
-| Field | Description |  Required| Multilingual Support|
-|----------|:--------:|:--------:|:--------:|
-| file1|  Name of the file, "article1.pdf" or url for remote galley| x |   |
-| fileLabel1|  Usually "PDF"| x | x |
-| fileGenre1|  Usually "Article Text"| x |   |
-| fileLocale1|  "en", "fi" etc. | x |   |
+| Field | Description |  Required|
+|----------|:--------:|:--------:|
+| file1|  Name of the file, "article1.pdf" or url for remote galley| x |
+| fileLabel1|  Usually "PDF"| x |
+| fileGenre1|  Usually "Article Text"| x |
+| fileLocale1|  "en", "fi" etc. | x |
 
 ## Importing multilingual data
 
@@ -104,16 +104,9 @@ en - English
 sv - Swedish
 fr - French
 de - German
-ru - Russian
-no - Norwegian
-da - Danish
-es - Spanish
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
-
-## Changes in version 1.4.0.0 (Aug 2023)
-- Support OJS 3.3
 
 ## Changes in version 1.3.1.0 (Mar 2021)
 - Support OJS 3.2
