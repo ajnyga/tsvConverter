@@ -1,10 +1,12 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.4.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-14, Aug 2023)
+Version 1.5.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-14, Aug 2023)
 
 The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
 
 ## Installation
+
+This tool requires PHP 8.2 or greater.
 
 Download and unzip the tsvConverter.
 
@@ -20,7 +22,11 @@ Before importing the created data to your production server, **you should try to
 
 Usage:
 
-	php convert.php sheetFilename filesFolderName [-v]
+	php convert.php [options] -x <xlsx filename> -f <files folder name>
+
+	Options:
+	[--defaultLocale | -l] <4-digit locale code>
+	[--onlyValidate | -v]
 
 Convert:
 
@@ -65,6 +71,7 @@ Only validate by adding -v:
 | issueTitle |  Issue title |  | x |
 | sectionTitle |  Section title, eg. "Articles" | x  | x |
 | sectionAbbrev |  Section abbreviation, eg. "ART" | x  |   |
+| sectionSeq |  Section sequence inside an issue, first section '1' |   |   |
 
 ## Multiplied fields
 An article can have multiple authors or full text files. Every article has to have at least one author and one file.
@@ -111,6 +118,10 @@ es - Spanish
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.5.0.0 (Aug 2024)
+- Revised command line parsing
+- Rewrite to use DOM model
 
 ## Changes in version 1.4.0.0 (Aug 2023)
 - Support OJS 3.3
