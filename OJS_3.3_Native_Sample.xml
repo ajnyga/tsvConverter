@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues xmlns="http://pkp.sfu.ca"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://pkp.sfu.ca native.xsd">
+    <issue journal_id="0" published="0" current="0" access_status="0" url_path="url_path1">
+        <id type="type1" advice="ignore">
+        </id>
+        <description locale="aa_AA">
+        </description>
+        <issue_identification>
+            <volume>0</volume>
+            <number>number0</number>
+            <year>0</year>
+            <title locale="aa_AA">
+            </title>
+        </issue_identification>
+        <date_published>2006-05-04</date_published>
+        <date_notified>2006-05-04</date_notified>
+        <last_modified>2006-05-04</last_modified>
+        <open_access_date>2006-05-04</open_access_date>
+        <sections>
+            <section ref="ref1" review_form_id="0" seq="seq1" editor_restricted="0" meta_indexed="0" meta_reviewed="0" abstracts_not_required="0"
+                 hide_title="0" hide_author="0" abstract_word_count="0">
+                <id type="type3" advice="ignore">
+                </id>
+                <abbrev locale="aa_AA">
+                </abbrev>
+                <policy locale="aa_AA">
+                </policy>
+                <title locale="aa_AA">
+                </title>
+            </section>
+        </sections>
+        <covers>
+            <cover locale="locale11">
+                <cover_image>cover_image0</cover_image>
+                <cover_image_alt_text>cover_image_alt_text0</cover_image_alt_text>
+                <embed encoding="base64" mime_type="mime_type1">
+                </embed>
+            </cover>
+        </covers>
+        <issue_galleys>
+            <issue_galley locale="locale13">
+                <label>label0</label>
+                <id type="type5" advice="ignore">
+                </id>
+                <issue_file>
+                    <file_name>file_name0</file_name>
+                    <file_type>file_type0</file_type>
+                    <file_size>0</file_size>
+                    <content_type>0</content_type>
+                    <original_file_name>original_file_name0</original_file_name>
+                    <date_uploaded>2006-05-04</date_uploaded>
+                    <date_modified>2006-05-04</date_modified>
+                    <embed encoding="base64" mime_type="mime_type3">
+                    </embed>
+                </issue_file>
+            </issue_galley>
+        </issue_galleys>
+        <articles>
+            <article stage="submission" status="status1" current_publication_id="0" date_submitted="2006-05-04" submission_progress="0"
+                 locale="locale15">
+                <id type="type7" advice="ignore">
+                </id>
+                <submission_file caption="caption1" copyright_owner="copyright_owner1" created_at="2006-05-04" credit="credit1" date_created="date_created1"
+                     direct_sales_price="0" file_id="0" genre="genre1" id="0" language="language1" sales_type="sales_type1"
+                     source_submission_file_id="0" stage="public" terms="terms1" updated_at="2006-05-04"
+                     uploader="uploader1" viewable="false">
+                    <creator locale="aa_AA">
+                    </creator>
+                    <description locale="aa_AA">
+                    </description>
+                    <name locale="aa_AA">
+                    </name>
+                    <publisher locale="aa_AA">
+                    </publisher>
+                    <source locale="aa_AA">
+                    </source>
+                    <sponsor locale="aa_AA">
+                    </sponsor>
+                    <subject locale="aa_AA">
+                    </subject>
+                    <submission_file_ref id="0"/>
+                    <file id="0" filesize="0" extension="extension1">
+                        <href src="http://www.oxygenxml.com/" mime_type="mime_type5"/>
+<!--                        <embed encoding="base64" mime_type="mime_type7">
+                        </embed>-->
+                    </file>
+                </submission_file>
+                <publication section_ref="section_ref1" seq="0" access_status="0" locale="locale31" language="language3" date_submitted="2006-05-04"
+                     date_published="2006-05-04" version="0" status="0" primary_contact_id="0" url_path="url_path3">
+                    <id type="type9" advice="ignore">
+                    </id>
+                    <title locale="aa_AA">
+                    </title>
+                    <prefix locale="aa_AA">
+                    </prefix>
+                    <subtitle locale="aa_AA">
+                    </subtitle>
+                    <abstract locale="aa_AA">
+                    </abstract>
+                    <coverage locale="aa_AA">
+                    </coverage>
+                    <type locale="aa_AA">
+                    </type>
+                    <source locale="aa_AA">
+                    </source>
+                    <rights locale="aa_AA">
+                    </rights>
+                    <licenseUrl>http://www.oxygenxml.com/</licenseUrl>
+                    <copyrightHolder locale="aa_AA">
+                    </copyrightHolder>
+                    <copyrightYear>0</copyrightYear>
+                    <keywords locale="locale51">
+                        <keyword>keyword0</keyword>
+                    </keywords>
+                    <agencies locale="locale53">
+                        <agency>agency0</agency>
+                    </agencies>
+                    <languages locale="locale55">
+                        <language>language0</language>
+                    </languages>
+                    <disciplines locale="locale57">
+                        <discipline>discipline0</discipline>
+                    </disciplines>
+                    <subjects locale="locale59">
+                        <subject>subject0</subject>
+                    </subjects>
+                    <authors>
+                        <author primary_contact="false" user_group_ref="user_group_ref1" include_in_browse="true" seq="0" id="0">
+                            <givenname locale="aa_AA">
+                            </givenname>
+                            <familyname locale="aa_AA">
+                            </familyname>
+                            <affiliation locale="aa_AA">
+                            </affiliation>
+                            <country>country0</country>
+                            <email>email0</email>
+                            <url>http://www.oxygenxml.com/</url>
+                            <orcid>http://www.oxygenxml.com/</orcid>
+                            <biography locale="aa_AA">
+                            </biography>
+                        </author>
+                    </authors>
+                    <citations locale="locale69">
+                        <citation>citation0</citation>
+                    </citations>
+                    <issue_identification>
+                        <volume>0</volume>
+                        <number>number1</number>
+                        <year>0</year>
+                        <title locale="aa_AA">
+                        </title>
+                    </issue_identification>
+                    <pages>pages0</pages>
+                    <covers>
+                        <cover locale="locale73">
+                            <cover_image>cover_image1</cover_image>
+                            <cover_image_alt_text>cover_image_alt_text1</cover_image_alt_text>
+                            <embed encoding="base64" mime_type="mime_type9">
+                            </embed>
+                        </cover>
+                    </covers>
+                    <issueId>0</issueId>
+                </publication>
+                <pkppublication locale="locale75" language="language5" date_submitted="2006-05-04" date_published="2006-05-04" version="0"
+                     status="0" primary_contact_id="0" url_path="url_path5">
+                    <id type="type11" advice="ignore">
+                    </id>
+                    <title locale="aa_AA">
+                    </title>
+                    <prefix locale="aa_AA">
+                    </prefix>
+                    <subtitle locale="aa_AA">
+                    </subtitle>
+                    <abstract locale="aa_AA">
+                    </abstract>
+                    <coverage locale="aa_AA">
+                    </coverage>
+                    <type locale="aa_AA">
+                    </type>
+                    <source locale="aa_AA">
+                    </source>
+                    <rights locale="aa_AA">
+                    </rights>
+                    <licenseUrl>http://www.oxygenxml.com/</licenseUrl>
+                    <copyrightHolder locale="aa_AA">
+                    </copyrightHolder>
+                    <copyrightYear>0</copyrightYear>
+                    <keywords locale="locale95">
+                        <keyword>keyword1</keyword>
+                    </keywords>
+                    <agencies locale="locale97">
+                        <agency>agency1</agency>
+                    </agencies>
+                    <languages locale="locale99">
+                        <language>language1</language>
+                    </languages>
+                    <disciplines locale="locale101">
+                        <discipline>discipline1</discipline>
+                    </disciplines>
+                    <subjects locale="locale103">
+                        <subject>subject1</subject>
+                    </subjects>
+                    <authors>
+                        <author primary_contact="false" user_group_ref="user_group_ref3" include_in_browse="true" seq="0" id="0">
+                            <givenname locale="aa_AA">
+                            </givenname>
+                            <familyname locale="aa_AA">
+                            </familyname>
+                            <affiliation locale="aa_AA">
+                            </affiliation>
+                            <country>country1</country>
+                            <email>email1</email>
+                            <url>http://www.oxygenxml.com/</url>
+                            <orcid>http://www.oxygenxml.com/</orcid>
+                            <biography locale="aa_AA">
+                            </biography>
+                        </author>
+                    </authors>
+                    <article_galley approved="false" galley_type="galley_type1" locale="locale113" url_path="url_path7">
+                        <id type="type13" advice="ignore">
+                        </id>
+                        <name locale="aa_AA">
+                        </name>
+                        <seq>0</seq>
+                        <submission_file_ref id="0"/>
+<!--                        <remote src="http://www.oxygenxml.com/"/>-->
+                    </article_galley>
+                    <citations locale="locale117">
+                        <citation>citation1</citation>
+                    </citations>
+                </pkppublication>
+            </article>
+        </articles>
+    </issue>
+</issues>

@@ -9,3 +9,7 @@
 !convert.php
 !LICENSE
 !exampleFiles/*
+!native.xsd
+!pkp-native.xsd
+!importexport.xsd
+!OJS_3.3_Native_Sample.xml

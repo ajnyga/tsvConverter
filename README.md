@@ -1,8 +1,8 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.5.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-14, Aug 2023)
+Version 1.6.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Oct 2024)
 
-The tool was created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). *It is not pretty*. It has not been thoroughly tested, but has been used to import the archives of around 20 journals since 2017. Feel free to use and develop further.
+The tool was originally created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). The current version consitutes a major revision and includes new features. Feel free to use and develop further.
 
 ## Installation
 
@@ -30,38 +30,41 @@ Usage:
 
 Convert:
 
-	php convert.php sheetFilename filesFolderName
+	php convert.php -x sheetFilename -f filesFolderName
 
 Only validate by adding -v:
 
-	php convert.php sheetFilename filesFolderName -v
+	php convert.php -x sheetFilename -f filesFolderName -v
 
 
 ### Step by step instructions
 1. Create an Excel file containing the article data. See the details below and the "exampleMinimal.xlsx" and "exampleAdvanced.xlsx" files. The metadata of each article is in one row. The order of the columns does not matter. 
-2. Sort the Excel file according to the publication date field (issueDatepublished) and the article sequence field (seq). See https://www.contextures.com/xlSort01.html#sorttwo
-3. Move the Excel file to the same folder with the conversion script. Move the full text files to a folder, for example "exampleFiles", below the conversion script.
-4. Run *php convert.php exampleMinimal.xlsx exampleFiles*
-5. The script will create one XML per year.
+2. Move the Excel file to the same folder as the conversion script. Move the full text files to a folder, for example "exampleFiles", below the conversion script.
+3. Run `php convert.php -x exampleMinimal.xlsx -f exampleFiles`
+4. The script will create one XML per year.
+
+Note that simple fields like, e.g. <description> can be added as columns to the excel sheet and will be converted to appropriate XML tags even if not listed in the tables below (see Advanced usage below).
 
 ## Article
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
-| prefix |  "The", "A" |  | x |   |
-| title |  Article title | x | x |
-| subTitle |  Article subtitle |   | x |
-| abstract|  Article abstract |   | x |
+| prefix | "The", "A" |  | x |   |
+| title | Article title | x | x |
+| subtitle | Article subtitle |   | x |
+| abstract | Article abstract |   | x |
 | articleSeq |  Article sequence inside an issue, first article '1' | x  |   |
-| pages| For example "23-45"  |  |   |
-| language| Article language "en", "fi", "sv", "de", "fr"  | x |   |
-| keywords| Word 1; Word 2; Word3 |  | x |
-| disciplines| History; Political science; Astronomy |  | x |
-| articleCopyrightYear| 2005 |  |   |
-| articleCopyrightHolder| "John Doe" |  |   |
-| articleLicenseUrl| http://creativecommons.org/licenses/by/4.0 |  |   |
-| doi| "10.1234/art.182" |  |   |
+| pages | For example "23-45"  |  |   |
+| language | Article language "en", "fi", "sv", "de", "fr"  | x |   |
+| keywords | Word 1; Word 2; Word3 |  | x |
+| disciplines | History; Political science; Astronomy |  | x |
+| subjects | Subject1; Subject2; ... |  | x |
+| articleCopyrightYear | 2005 |  |   |
+| articleCopyrightHolder | "John Doe" |  |   |
+| articleLicenseUrl | http://creativecommons.org/licenses/by/4.0 |  |   |
+| articlePrimaryContactId  | Id of primary author (default = 1) |  |  |
+| doi | "10.1234/art.182" |  |   |
 
-## Issue
+## Issues & Sections
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
 | issueDatepublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |   |
@@ -81,26 +84,26 @@ If an article has for example three authors, the excel file should include colum
 ### Authors
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
-| authorFirstname1|  Given name | x | x |
+| authorGivenname1|  Given name | x | x |
 | authorMiddlename1|  Middle name |  |   |
-| authorLastname1|  Family name |   | x |
+| authorFamilyname1|  Family name |   | x |
 | authorEmail1|  Email |  |   |
 | authorAffiliation1|  Affiliation |   | x |
-| country1|  "FI", "SE", "DK", "CA", "US" |   |   |
-| orcid1|  Orcid ID, should include "https://". Note that adding Orcid ID's this way is not recommended by Orcid. |   |   |
-| authorBio1|  Biography |   | x |
+| authorCountry1|  "FI", "SE", "DK", "CA", "US" |   |   |
+| authorOrcid1|  Orcid ID, should include "https://". Note that adding Orcid ID's this way is not recommended by Orcid. |   |   |
+| authorBiography1|  Biography |   | x |
 
-### Files
+### Files & Galleys
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
-| file1|  Name of the file, "article1.pdf" or url for remote galley| x |   |
-| fileLabel1|  Usually "PDF"| x | x |
+| fileName1|  Name of the file, "article1.pdf" or url for remote galley| x |   |
 | fileGenre1|  Usually "Article Text"| x |   |
-| fileLocale1|  "en", "fi" etc. | x |   |
+| galleyLabel1|  Usually "PDF"| x | x |
+| galleyLocale1|  "en", "fi" etc. | x |   |
 
 ## Importing multilingual data
 
-The new version of the converter supports three different ways of handling locales:
+The converter supports three different ways of handling locales:
 - Alternative 1: If all your data is in one language, you can just give the defaultLocale value in the converter settings.
 - Alternative 2: If some of your articles are for example in English and some in Finnish, you can add an additional column named "language" and give the article locale in that column. See the example xls-file. All the article medata will be saved using the locale given in the language field. For example *title* can contain both English and Finnish titles as long as the language column matches the language used in the field.
 - Alternative 3: If your articles are all in one language, but you also have some metadata in other languages, for example an abstract in another language, you can give an additional abstract field in a column named locale:abstract (for example en:abstract)
@@ -116,12 +119,35 @@ no - Norwegian
 da - Danish
 es - Spanish
 
+## Validating XML
+
+Install `libxml2-util` if xmllint is not already available, e.g.: `apt-get install libxml2-utils`.
+
+Run `xmllint --noout --schema native.xsd <xml file>` to vaildate against OJS 3.3 native xsd.
+
+## Additional xsd and xml files
+
+The files `native.xsd`, `pkp-native.xsd` and `importexport.xsd` were taken from the OJS 3.3 repo for validation purposes.
+The file `OJS_3.3_Native_Sample.xml` was automatically generated from theses xsd files by means of the Oxygen XML Editor. It provides a template from which XML tag order and required locale attributes are deduced.
+
+## Advanced usage
+
+The algorythm will convert any column name that resolves to a valid PKP native XML tag even if not specifically handled in the code. I.e., fields like creator, description, publisher, source, sponsor can be included in the excel sheet (even with locale codes). The default locale code is not used in this case. Column names without locale qualifier will have no locale attribute.
+
+E.g. to add an issue description simply add a column `issueDescription`, or in Finish language create a column `fi:issueDescription`. A column `fileDescription2` will be interpreted as the tag `<description>` of the second `<submission_file>` tag.
+
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
 
-## Changes in version 1.5.0.0 (Aug 2024)
-- Revised command line parsing
-- Rewrite to use DOM model
+## Changes in version 1.6.0.0 (Oct 2024)
+- revised command line parsing
+- revised field/column naming
+- full issue data used for issue identification
+- rewrite to use PHP DOM model
+- various XSDs for OJS 3.3 native XML added to improve XML handling and enable validation (by external tools like e.g. xmllint)
+
+## Changes in version 1.5.0.0 (Aug 2023)
+- new fields added
 
 ## Changes in version 1.4.0.0 (Aug 2023)
 - Support OJS 3.3

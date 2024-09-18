@@ -1,22 +1,17 @@
 <?php
 
 # Usage:
-# php convert.php sheetFilename filesFolderName
+# php convert.php -x <xslx file> -f <files folder> [-v] [-l <default locale>]
 
 // PHPExcel settings
-// error_reporting(E_ALL);
 ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
-date_default_timezone_set('Europe/Helsinki');
 define('EOL', (PHP_SAPI == 'cli') ? PHP_EOL : '<br />');
 
 require 'vendor/autoload.php';
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
 class ConvertExcel2PKPNativeXML {
-	
+
 	// cli parsing
 	private $opts;
 	private $posArgs;
@@ -27,27 +22,41 @@ class ConvertExcel2PKPNativeXML {
 
 	// defaults
 	private $defaultUploader = 'admin';
-	private $defaultAuthor;
-	private $defaultUserGroupRef;
+	private $defaultAuthor = ['givenname' => 'Editorial Board'];
 	private $defaultLocale = 'en_US';
+	private $defaultUserGroupRef = [
+		'en_US' => 'Author',
+		'de_DE' => 'Autor/in',
+		'sv_SE' => 'F&#xF6;rfattare'
+	];
+	private $primaryContactId;
 
 	// table parsing
 	private $issueKeys;
 	private $sectionKeys;
 	private $articleKeys;
-	private $locales = array(
+	private $authorKeys;
+	private $locales = [
 		'en' => 'en_US',
 		'fi' => 'fi_FI',
 		'sv' => 'sv_SE',
 		'de' => 'de_DE',
-		'ge' => 'de_DE',
 		'ru' => 'ru_RU',
 		'fr' => 'fr_FR',
 		'no' => 'nb_NO',
 		'da' => 'da_DK',
 		'es' => 'es_ES',
-	);
+	];	
 
+	// xml generation
+	private $articleElementOrder;
+	private $publicationElementOrder;
+	private $authorElementOrder;
+	private $submissionFileElementOrder;
+	private $issueElementOrder;
+	private $issueIdentificationElementOrder;
+	private $elementHasLocaleAttribute;
+	
 	// Constructor
 	public function __construct($argv) {
 
@@ -59,20 +68,21 @@ class ConvertExcel2PKPNativeXML {
 		$this->posArgs = array_slice($argv, $rest_index);
 
 		if (!$this->validateInput()) {
-
+			echo date('H:i:s'), " Data validation failed!", EOL;
 		}
 
-		// set defaults
-
-		// Default author name. If no author is given for an article, this name is used instead.
-		$this->defaultAuthor['givenname'] = "Editorial Board";
-
-		// Default user group (localized)
-		$this->defaultUserGroupRef = array(
-			'en_US' => 'Author',
-			'de_DE' => 'Autor/in',
-			'sv_SE' => 'F&#xF6;rfattare'
-		);
+		// Get the required order of elements from sample xml file
+		$xsdFile = 'OJS_3.3_Native_Sample.xml';
+		$dom = new DOMDocument;
+		$dom->load($xsdFile);
+		$this->articleElementOrder = $this->getChildElementsOrder($dom, 'article');
+		$this->publicationElementOrder = $this->getChildElementsOrder($dom, 'pkppublication');
+		array_splice($this->publicationElementOrder, 1, 0, 'doi'); // allow 'doi' to come directly after 'id'
+		$this->authorElementOrder = $this->getChildElementsOrder($dom, 'author');
+		$this->submissionFileElementOrder = $this->getChildElementsOrder($dom, 'submission_file');
+		$this->issueElementOrder = $this->getChildElementsOrder($dom, 'issue');
+		$this->issueIdentificationElementOrder = $this->getChildElementsOrder($dom, 'issue_identification');
+		$this->elementHasLocaleAttribute = $this->hasLocaleAttribute($dom);
 
 		// load data
 		echo date('H:i:s'), " Creating a new PHPExcel object", EOL;
@@ -83,8 +93,6 @@ class ConvertExcel2PKPNativeXML {
 
 		echo date('H:i:s'), " Creating an array", EOL;
 		$articles = $this->createArray($sheet);
-		$maxAuthors = $this->countMaxAuthors($sheet);
-		$maxFiles = $this->countMaxFiles($sheet);
 
 		/* 
 		* Data validation   
@@ -118,31 +126,40 @@ class ConvertExcel2PKPNativeXML {
 		echo date('H:i:s'), " Preparing data for output", EOL;
 
 		# Create issue and section identification
-
 		$this->issueKeys = $this->getUniqueKeys($articles, 'issue');
 		$this->sectionKeys = $this->getUniqueKeys($articles, 'section');
-		$this->articleKeys = array_diff($this->getUniqueKeys($articles), $this->issueKeys, $this->sectionKeys);
-		// $sections = [];
+		$this->authorKeys = $this->getUniqueKeys($articles, 'author');
+		$this->articleKeys = array_diff($this->getUniqueKeys($articles), $this->issueKeys, $this->sectionKeys, $this->authorKeys);
+
 		$issueIdentifications = [];
 		$issueData = [];
-		//  reindex array (keys used as article id later)
-		$articles = array_values($articles);
+		$articles = array_values($articles); // reindex array (keys used as article id later)
 		foreach ($articles as $id => $article) {
 
 			// identify issue and sections for each article by hash generated from issue and section fields
+
+			// get issue data
 			$issueIdentification = array_intersect_key($article, array_flip($this->issueKeys));
-			$article['articleIssueHash'] = hash("sha256", implode(", ", $issueIdentification));
+			$articleIssueHash = hash("sha256", implode(", ", $issueIdentification));
+			$issueIdentifications[$articleIssueHash] = $issueIdentification;
+			foreach ($issueIdentification as $key => $value) {
+				unset($article[$key]);
+			}
 
+			// get section data
 			$sectionIdentification = array_intersect_key($article, array_flip($this->sectionKeys));
-			$article['articleSectionHash'] = hash("sha256", implode(", ", $sectionIdentification));
+			// Sort the array alphabetically by the node value (required by native.xsd)
+			ksort($sectionIdentification);
+			foreach ($sectionIdentification as $key => $value) {
+				unset($article[$key]);
+			}
 
-			$issueIdentifications[$article['articleIssueHash']] = $issueIdentification;
+			// put all together			
+			$issueData[$articleIssueHash]['issues'] = $issueIdentification;
+			$issueData[$articleIssueHash]['sections']['section'] = $sectionIdentification;
 
-			$issueData[$article['articleIssueHash']]['issue_identification'] = $issueIdentification;
-			$issueData[$article['articleIssueHash']]['sections']['section'] = $sectionIdentification;
-
-			$issueData[$article['articleIssueHash']]['articles'][$id] = array_intersect_key($article, array_flip($this->articleKeys));
-			$issueData[$article['articleIssueHash']]['articles'][$id]['sectionAbbrev'] = $sectionIdentification['sectionAbbrev'];
+			$issueData[$articleIssueHash]['articles'][$id] = $article;
+			$issueData[$articleIssueHash]['articles'][$id]['sectionAbbrev'] = $sectionIdentification['sectionAbbrev'];
 		}
 
 		/* 
@@ -151,17 +168,11 @@ class ConvertExcel2PKPNativeXML {
 		*/
 
 		echo date('H:i:s'), " Starting XML output", EOL;
-		$currentIssueDatepublished = null;
-		$currentYear = null;
-		$submission_file_id = 1;
-		$authorId = 1;
-		$submissionId = 1;
-		$file_id = 1;
 
 		$dom = new DOMDocument('1.0', 'UTF-8');
 		$dom->formatOutput = true;
 
-		$issuesDOM = $dom->createElement('issues');
+		[$issuesDOM, $pos] = $this->getOrCreateDOMElement($dom, 'issues', 'http://pkp.sfu.ca');
 		$dom->appendChild($issuesDOM);
 
 		// Create issue DOMs
@@ -169,7 +180,7 @@ class ConvertExcel2PKPNativeXML {
 			$issuesDOM = $this->processData($issuesDOM, $issueDataContent);
 		}
 
-		$dom->save('test.xml');
+		$dom->save($this->fileName.'.xml');
 	}
 
 	function validateInput() {
@@ -227,107 +238,338 @@ class ConvertExcel2PKPNativeXML {
 	}
 
 	function processData($dom, $data) {
-		foreach ($data as $tagName => $content) {
-			// Create a new element with tag name and data
-			switch ($tagName) {
+		foreach ($data as $tagname => $content) {
+			if (strlen($tagname) > 0) // to reject any blank lines in the excel sheet
+			switch ($tagname) {
 				case 'sections':
-					$sectionsDOM = $this->getOrCreateCollectionDOM($dom, 'sections');
-					$sectionDOM = $dom->ownerDocument->createElement('section');
+					[$issueDOM, $pos] = $this->getOrCreateDOMElement($dom->ownerDocument, 'issue');
+
+					[$sectionsDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'sections');
+					$issueDOM->appendChild($sectionsDOM);
+
+					[$sectionDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'section');
 					$sectionsDOM->appendChild($sectionDOM);
-	
-					$sectionDOM = $this->processData($sectionDOM, $data['sections']['section']);
-	
+
+					$sectionDOM = $this->processData($sectionDOM, $data['sections']['section']);	
 					break;
-				case 'issue_identification':
-					$issueDOM = $dom->ownerDocument->createElementNS('http://pkp.sfu.ca', 'issue');
+				case 'issues':
+					[$issueDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'issue', 'http://pkp.sfu.ca');
+					$dom->appendChild($issueDOM);
+
+					$issueData = $data[$tagname];
+					$issueData = $this->stripColumnPrefix($issueData, 'issue');
+
+					$issueIdentificationData = [];
+					foreach ($this->issueIdentificationElementOrder as $field) {
+						if (array_key_exists($field, $issueData)) {
+							$issueIdentificationData[$field] = $issueData[$field];
+							unset($issueData[$field]);
+						}
+					}
+					$issueData['issue_identification'] = $issueIdentificationData;
+
+					$issueData = $this->sortArrayElementsByKey($issueData, $this->issueElementOrder);
+
+					$issueDOM = $this->processData($issueDOM, $issueData);
+
 					$issueDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
 					$issueDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
 					$issueDOM->setAttribute('published', '1');
 					$issueDOM->setAttribute('current', '0');
-					$dom->appendChild($issueDOM);
-					
-					$issuesIdentificationDOM = $dom->ownerDocument->createElement($tagName);
-					$issueDOM->appendChild($issuesIdentificationDOM );
-					$issuesIdentificationDOM = $this->processData($issuesIdentificationDOM, $data[$tagName]);
+					break;
+				case 'issue_identification':
+					[$issuesIdentificationDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $tagname);
+					$dom->appendChild($issuesIdentificationDOM );
+
+					$issuesIdentificationDOM = $this->processData($issuesIdentificationDOM, $content);
 					break;
 				case 'sectionTitle':
 				case 'sectionAbbrev':
-					$element = $dom->ownerDocument->createElement(
-						strtolower(str_replace('section', '', $tagName)),
-						htmlspecialchars($data[$tagName])
-					);
-					$dom->setAttribute('ref', htmlspecialchars($data['sectionAbbrev']));
-					$dom->setAttribute('seq', htmlspecialchars(isset($data['sectionSeq']) ? $data['sectionSeq'] : "0"));
-					$dom->appendChild($element);
+					// according to native.xsd abbrev and title need to be in (probably) alphabetic order (see ksort above)
+					$xmlTagName = strtolower(str_replace('section', '', $tagname));
+					$dom = $this->processData($dom, [$xmlTagName => $content]);
+					$dom->setAttribute('ref', $data['sectionAbbrev']);
+					$dom->setAttribute('seq', isset($data['sectionSeq']) ? $data['sectionSeq'] : "0");
 					break;
-				case 'issueVolume':
-				case 'issueNumber':
-				case 'issueYear':
-				case 'issueTitle':
-					$element = $dom->ownerDocument->createElement(
-						strtolower(str_replace('issue', '', $tagName)),
-						htmlspecialchars($data[$tagName])
-					);
-					$dom->appendChild($element);
-					break;
-				case 'issueDatePublished':
+				case 'datePublished':
+					[$issueDOM, $pos] = $this->getOrCreateDOMElement($dom->ownerDocument, 'issue');
 					$element = $dom->ownerDocument->createElement('date_published', $content);
-					$dom->appendChild($element);
+					$issueDOM->appendChild($element);
 					$element = $dom->ownerDocument->createElement('last_modified', $content);
-					$dom->appendChild($element);
+					$issueDOM->appendChild($element);
 					break;
 				case 'articles':
-					$articlesDOM = $this->getOrCreateCollectionDOM($dom, 'articles', 'http://pkp.sfu.ca');
-					$articlesDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-					$articlesDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
-	
-					foreach ($data['articles'] as $id => $article) {
-						$articleDOM = $dom->ownerDocument->createElement('article');
-						$id = $dom->ownerDocument->createElement('id', $id);
-						$id->setAttribute('type', 'internal');
-						$id->setAttribute('advice', 'ignore');
-						$articleDOM->appendChild($id);
+					[$articlesDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'articles', 'http://pkp.sfu.ca');
+					[$issueDOM, $pos] = $this->getOrCreateDOMElement($dom->ownerDocument, 'issue');
+					$issueDOM->appendChild($articlesDOM);
+
+					foreach ($content as $articleId => $article) {
 
 						# Article
 						echo date('H:i:s'), " Adding article: ", $article['title'], EOL;
 
-						# Check if language has an alternative default locale
-						# If it does, use the locale in all fields
-						$articleLocale = $this->defaultLocale;
-						if (!empty($article['language'])) {
-							$articleLocale = $this->locales[trim($article['language'])];
-						}
-
-						$publicationDOM = $dom->ownerDocument->createElement('publication');
-						$publicationDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-						$publicationDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
-						$publicationDOM->setAttribute('locale', $articleLocale);
-						$publicationDOM->setAttribute('version', "1");
-						$publicationDOM->setAttribute('status', "3");
-						$publicationDOM->setAttribute('access_status', "0");
-						// $publicationDOM->setAttribute('primary_contact_id', $authorId); TODO @RS
-						$publicationDOM->setAttribute('url_path', "");
-						$publicationDOM->setAttribute('date_published', $dom->getElementsByTagName('date_published')[0]->textContent);
-						$publicationDOM->setAttribute('section_ref', $article['sectionAbbrev']);
-						if (isset($article['articleSeq'])) {
-							$publicationDOM->setAttribute('seq', $article['articleSeq']);
-						}
-						$articleDOM->appendChild($publicationDOM);
-
-						$publicationDOM = $this->processData($publicationDOM, $article);
-
-						// TODO @RS submission_file
-
+						[$articleDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'article');
 						$articlesDOM->appendChild($articleDOM);
+
+						$articleDOM->setAttribute('stage', 'production');
+						$issueDatePublished = $dom->getElementsByTagName('date_published')[0]->textContent;
+						$articleDOM->setAttribute('date_submitted', $issueDatePublished);
+						$articleDOM->setAttribute('status', '3');
+						$articleDOM->setAttribute('submission_progress', '0');
+						$articleDOM = $this->processData($articleDOM, ['id' => [
+								'type'=> 'internal',
+								'id' => $articleId+1
+							]]);
+
+						// get file data 
+						$fileKeys = $this->getUniqueKeys([$article], 'file');
+						$fileData = [];
+						foreach ($fileKeys as $key) {
+							preg_match('/^(.*?)(\d+)$/', str_replace('file','',$key), $matches);
+							$elementName = strtolower($matches[1]);
+							$id = $matches[2];
+							if (strlen($article[$key]) > 0) {
+								$fileData[$id][$elementName] = $article[$key];
+							}
+							unset($article[$key]);
+						}
+
+						$articleDOM = $this->processData($articleDOM, [
+							'submission_file' => $fileData
+						]);
+							
+						$articleDOM = $this->processData($articleDOM, [
+							'publication' => $article
+						]);
 					}
 	
 					break;
+				case 'publication':
+					[$publicationDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'publication');
+					$dom->appendChild($publicationDOM);
+					$publicationId = $pos;
+
+					$dom->setAttribute('current_publication_id', $publicationId);
+
+					$publicationDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+					$publicationDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
+					
+					# Check if language has an alternative default locale
+					# If it does, use the locale in all fields
+					$articleLocale = $this->defaultLocale;
+					if (!empty($article['language'])) {
+						$articleLocale = $this->locales[trim($content['language'])];
+					}
+					unset($content['language']);
+
+					$publicationDOM->setAttribute('locale', $articleLocale);
+					$publicationDOM->setAttribute('version', "1");
+					$publicationDOM->setAttribute('status', "3");
+					$publicationDOM->setAttribute('access_status', "0");
+					$publicationDOM->setAttribute('url_path', "");
+
+					[$element, $pos] = $this->getOrCreateDOMElement($dom,'issue');
+					$issueDatePublished= $element->getElementsByTagName('date_published')[0]->textContent;
+
+					$publicationDOM->setAttribute('date_published', $issueDatePublished);
+					$publicationDOM->setAttribute('section_ref', $content['sectionAbbrev']);
+					unset($content['sectionAbbrev']);
+					if (isset($content['articleSeq'])) {
+						$publicationDOM->setAttribute('seq', $content['articleSeq']);
+						unset($content['articleSeq']);
+					}
+
+					$publicationDOM = $this->processData($publicationDOM,  [
+						'id' => [
+							'type'=> 'internal',
+							'id' => $publicationId
+						]]);
+
+					$content = $this->stripColumnPrefix($content, 'article');
+
+					//  get the author data (we need to process it later)
+					$authorKeys = $this->getUniqueKeys([$content], 'author');
+					$content['authors'] = [];
+					foreach ($authorKeys as $key) {
+						preg_match('/^(.*?)(\d+)$/', str_replace('author','',$key), $matches);
+						$elementName = strtolower($matches[1]);
+						$id = $matches[2];
+						if (strlen($content[$key]) > 0) {
+							$content['authors'][$id][$elementName] = $content[$key];
+						}
+						unset($content[$key]);
+					}
+					foreach ($content['authors'] as $id => $authorData) {
+						// create required fields if not provided
+						$missingKeys = array_diff(
+							['givenname','familyname','affiliation','country','email'],
+							array_keys($authorData)
+						);
+						// set missing values
+						foreach ($missingKeys as $key) {
+							if ($key == 'givenname') {
+								$authorData[$key] = $this->defaultAuthor;
+							} else {
+								$authorData[$key] = "";
+							}
+						}
+						// sort elements according to required field order
+						$content['authors'][$id] = $this->sortArrayElementsByKey($authorData, $this->authorElementOrder);
+					}
+
+					// get galley data 
+					$galleyKeys = $this->getUniqueKeys([$content], 'galley');
+					$galleyData = [];
+					foreach ($galleyKeys as $key) {
+						preg_match('/^(.*?)(\d+)$/', str_replace('galley','',$key), $matches);
+						$elementName = strtolower($matches[1]);
+						$id = $matches[2];
+						if (strlen($content[$key]) > 0) {
+							$galleyData[$id][$elementName] = $content[$key];
+						}
+						unset($content[$key]);
+					}
+					$content['article_galley'] = $galleyData;
+
+					$content = $this->sortArrayElementsByKey($content, $this->publicationElementOrder);
+
+					// process data
+					$publicationDOM = $this->processData($publicationDOM, $content);
+
+					$publicationDOM->setAttribute('primary_contact_id', $this->primaryContactId);
+					break;
+				case 'authors':
+					[$authorsDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'authors', 'http://pkp.sfu.ca');
+					$dom->appendChild($authorsDOM);
+
+					$i = 0;
+					foreach ($content as $authorId => $author) {
+							
+						[$authorDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'author');
+						$authorsDOM->appendChild($authorDOM);
+				
+						$authorDOM->setAttribute('include_in_browse', 'true');
+						$authorDOM->setAttribute('user_group_ref', $this->defaultUserGroupRef[$this->defaultLocale]);
+						$authorDOM->setAttribute('seq', $authorId);
+						$authorDOM->setAttribute('id', $pos + 1 + $i);
+
+						$this->primaryContactId = $pos + 1;
+						if (isset($data['primaryContactId'])) {
+							if ($data['primaryContactId'] == $authorId) {
+								$this->primaryContactId = $pos + 1 + $i;
+							}
+							unset($data['primaryContactId']);
+						}
+
+						$authorDOM = $this->processData($authorDOM, $author);
+						$i++;
+					}
+					break;
+				case 'article_galley':
+					foreach ($content as $id => $galleyData) {
+						[$articleGalleysDOM, $pos] = $this->createDOMElement($dom->ownerDocument, 'article_galley', 'http://pkp.sfu.ca');
+						$dom->appendChild($articleGalleysDOM);
+						
+						$articleGalleysDOM->setAttribute('locale', $this->locales[$galleyData['locale']]);
+						$articleGalleysDOM->setAttribute('approved', "false");
+
+						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['name' => $galleyData['label']]);
+						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['seq' => $id-1]);
+
+						[$fileRef, $pos] = $this->createDOMElement($dom->ownerDocument, 'submission_file_ref');
+						$articleGalleysDOM->appendChild($fileRef);
+
+						$fileRef->setAttribute('id', $pos+1);
+					}
+					break;
+				case 'id':
+					switch ($content['type']) {
+						case 'internal':
+							$id = $dom->ownerDocument->createElement('id', $content['id']);
+							$id->setAttribute('type', 'internal');
+							$id->setAttribute('advice', 'ignore');
+							break;
+					}
+					$dom->appendChild($id);
+					break;
+				case 'doi':
+					$id = $dom->ownerDocument->createElement('id', $content);
+					$dom->appendChild($id);
+
+					$id->setAttribute('type', 'doi');
+					$id->setAttribute('advice', 'update');
+					break;
+				case str_ends_with($tagname, 'keywords'): // Checks if $value ends with 'keywords'
+				case str_ends_with($tagname, 'disciplines'): // Checks if $value ends with 'disciplines'
+				case str_ends_with($tagname, 'subjects'): // Checks if $value ends with 'subjects'
+					[$locale, $xmlTagName] = $this->splitLocaleTagName($tagname);
+					[$elementsDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $xmlTagName);
+					$dom->appendChild($elementsDOM);
+
+					$elementsDOM->setAttribute('locale', $locale);
+					
+					foreach (explode(';', $content) as $element) {
+						$elementDOM = $dom->ownerDocument->createElement(rtrim($xmlTagName, "s"), $element);
+						$elementsDOM->appendChild($elementDOM);
+					}
+					
+					break;
+				case 'submission_file':
+					foreach ($content as $id => $submissionFileData) {
+						[$subFileDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $tagname, 'http://pkp.sfu.ca');
+						$dom->appendChild($subFileDOM);
+
+						$subFileDOM->setAttribute('stage', 'proof');
+						$subFileDOM->setAttribute('id', $pos+1);
+						$subFileDOM->setAttribute('file_id', $pos+1);
+						$subFileDOM->setAttribute('uploader', $this->defaultUploader);
+						$subFileDOM->setAttribute('genre', $submissionFileData['genre']);
+						unset($submissionFileData['genre']);
+
+						$submissionFileData = $this->sortArrayElementsByKey($submissionFileData, $this->submissionFileElementOrder);
+	
+						$subFileDOM = $this->processData($subFileDOM, $submissionFileData);
+						
+						$filePath = $this->filesFolder . $submissionFileData['name'];
+						if (file_exists($filePath)) {
+							$size = filesize($filePath);
+							echo date('H:i:s') . " Addting file " . $filePath . EOL;
+							$file = $dom->ownerDocument->createElement('file');
+							$subFileDOM->appendChild($file);
+
+							$file->setAttribute('id', $pos+1);
+							$file->setAttribute('filesize', $size);
+							$file->setAttribute('extension', pathinfo($submissionFileData['name'], PATHINFO_EXTENSION));
+
+							$embed = $dom->ownerDocument->createElement('embed', base64_encode(file_get_contents($filePath)));
+							$embed->setAttribute('encoding','base64');
+							$file->appendChild($embed);
+						} else {
+							echo date('H:i:s') . " WARNING: file " . $filePath . " not found !" . EOL;
+						}
+					}
+					break;
 				default:
-					// here we handle all article columns
-					if (in_array($tagName, $this->articleKeys)) {
-						switch ($tagName) {
-							case 'title':
-								
+					// here we handle all text nodes
+					if (strlen($tagname) > 0) {
+						switch ($tagname) {
+							case 'primaryContactId':
+								// fields that hold attributes don't create a tag
+								break;
+							case in_array($tagname, $this->elementHasLocaleAttribute):
+							case (strpos($tagname, ':') === 2):
+								// elements with locale attribute
+								[$locale, $tagname] = $this->splitLocaleTagName($tagname);
+								$element = $dom->ownerDocument->createElement($tagname, $content);
+								if ($locale) {
+									$element->setAttribute('locale', $locale);
+								}
+								$dom->appendChild($element);
+								break;
+							default:
+								// elements without locale attribute
+								$element = $dom->ownerDocument->createElement($tagname, $content);
+								$dom->appendChild($element);
 								break;
 						}
 					}
@@ -336,79 +578,89 @@ class ConvertExcel2PKPNativeXML {
 		}
 		return $dom;
 	}
-	
-	function getOrCreateCollectionDOM($dom, $tagname, $namespace = NULL) {
-		$collectionDOM = $dom->ownerDocument->getElementById($tagname);
-		if (!isset($collectionDOM) || $collectionDOM->length == 0) {
-			if ($namespace) {
-				$collectionDOM = $dom->ownerDocument->createElementNS($namespace, $tagname);
-			} else {
-				$collectionDOM = $dom->ownerDocument->createElement($tagname);
-			}
-			$dom->lastChild->appendChild($collectionDOM);
-		}
-		return $collectionDOM;
-	}
 
 	/* 
 	* Helpers 
 	* -----------
 	*/
 
+	// sort elements according to required field order
+	function sortArrayElementsByKey(array $dataArray, array $fieldOrder) {
 
-	# Function for searching alternative locales for a given field
-	function searchLocalisations($key, $input, $intend, $tag = null, $flags = null)
-	{
-		global $locales;
-
-		if ($tag == "") $tag = $key;
-
-		$nodes = "";
-		$pattern = "/:" . $key . "/";
-		$values = array_intersect_key($input, array_filter(array_flip(preg_grep($pattern, array_keys($input), $flags ?? 0))));
-
-		foreach ($values as $keyval => $value) {
-			if ($value != "") {
-				$shortLocale = explode(":", $keyval);
-				if (strpos($value, "\n") !== false || strpos($value, "&") !== false || strpos($value, "<") !== false || strpos($value, ">") !== false) $value = "<![CDATA[" . nl2br($value) . "]]>";
-				for ($i = 0; $i < $intend; $i++) $nodes .= "\t";
-				$nodes .= "<" . $tag . " locale=\"" . $locales[$shortLocale[0]] . "\">" . $value . "</" . $tag . ">\r\n";
+		$orderedArray = [];
+		foreach ($fieldOrder as $xmlTagName) {
+			if (isset($dataArray[$xmlTagName])) {
+				$orderedArray[$xmlTagName] =  $dataArray[$xmlTagName];
+				unset($dataArray[$xmlTagName]);
 			}
-		}
-
-		return $nodes;
-	}
-
-	# Function for searching alternative locales for a given taxonomy field
-	function searchTaxonomyLocalisations($key, $key_singular, $input, $intend, $flags = 0)
-	{
-		global $locales;
-
-		$nodes = "";
-		$intend_string = "";
-		for ($i = 0; $i < $intend; $i++) $intend_string .= "\t";
-		$pattern = "/:" . $key . "/";
-		$values = array_intersect_key($input, array_flip(preg_grep($pattern, array_keys($input), $flags)));
-
-		foreach ($values as $keyval => $value) {
-			if ($value != "") {
-
-				$shortLocale = explode(":", $keyval);
-
-				$nodes .= $intend_string . "<" . $key . " locale=\"" . $locales[$shortLocale[0]] . "\">\r\n";
-
-				$subvalues = explode(";", $value);
-				foreach ($subvalues as $subvalue) {
-					$nodes .= $intend_string . "\t<" . $key_singular . "><![CDATA[" . trim($subvalue) . "]]></" . $key_singular . ">\r\n";
+			foreach (array_flip($this->locales) as $locale) {
+				$localeKey = $locale.':'.$xmlTagName;
+				if (array_key_exists($localeKey, $dataArray)) {
+					$orderedArray[$localeKey] = $dataArray[$localeKey];
+					unset($dataArray[$localeKey]);
 				}
-
-				$nodes .= $intend_string . "</" . $key . ">\r\n";
 			}
 		}
-
-		return $nodes;
+		$orderedArray = array_merge($orderedArray, $dataArray);
+		return $orderedArray;
 	}
 
+	// extract locale value from tag name
+	function splitLocaleTagName($tagname, $locale = NULL) {
+		// Is there a valid locale specified?
+		if (strpos($tagname, ":") !== false) {
+			$locale = $this->locales[explode(':',$tagname)[0]];
+			if (!$locale) {
+				$locale = $this->defaultLocale;
+			} else {
+				$tagname = explode(':',$tagname)[1];
+			}
+			return [$locale, $tagname];
+		} else {
+			$locale = $this->defaultLocale;
+		}
+		return [$locale, $tagname];
+	}
+
+	function createDOMElement($root, $tagname, $namespace = NULL) {
+		echo date('H:i:s') . " Creating element " . $tagname . EOL;
+		if ($namespace) {
+			$targetDOM = $root->createElementNS($namespace, $tagname);
+			$targetDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+			$targetDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
+		} else {
+			$targetDOM = $root->createElement($tagname);
+		}
+		
+		return [$targetDOM, $root->getElementsByTagname($tagname)->length];
+	}
+
+	// Try to get the last DOM element with the given tag name. If none exists create a new one
+	function getOrCreateDOMElement($dom, $tagname, $namespace = NULL) {
+		// try to get the requested element
+		if (get_class($dom) !== "DOMDocument") {
+			$root = $dom->ownerDocument;
+		} else {
+			$root = $dom;
+		}
+		$targetDOM = $root->getElementsByTagName($tagname);
+		
+		// create element if not found
+		if (!isset($targetDOM) || $targetDOM->length == 0) {
+			[$targetDOM, $pos] = $this->createDOMElement($root, $tagname, $namespace);
+			if (!get_class($dom) === "DOMDocument") {
+				$dom->lastChild->appendChild($targetDOM);
+			} else {
+				$dom->appendChild($targetDOM);
+			}
+			$elementPosition = $pos;
+		} else {
+			$elementPosition = $targetDOM->length;
+			$targetDOM = $targetDOM->item($targetDOM->length - 1);
+		}
+
+		return [$targetDOM, $elementPosition];
+	}
 
 	# Function for creating an array using the first row as keys
 	function createArray($sheet)
@@ -471,40 +723,9 @@ class ConvertExcel2PKPNativeXML {
 		return $array;
 	}
 
-	# Check the highest author number
-	function countMaxAuthors($sheet)
-	{
-		$highestcolumn = $sheet->getHighestColumn();
-		$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
-		$header = $headerRow[0];
-		$authorFirstnameValues = array();
-		foreach ($header as $headerValue) {
-			if ($headerValue && strpos($headerValue, "authorFirstname") !== false) {
-				$authorFirstnameValues[] = (int) trim(str_replace("authorFirstname", "", $headerValue));
-			}
-		}
-		return max($authorFirstnameValues);
-	}
-
-	# Check the highest file number
-	function countMaxFiles($sheet)
-	{
-		$highestcolumn = $sheet->getHighestColumn();
-		$headerRow = $sheet->rangeToArray('A1:' . $highestcolumn . "1");
-		$header = $headerRow[0];
-		$fileValues = array();
-		foreach ($header as $headerValue) {
-			if ($headerValue && strpos($headerValue, "fileLabel") !== false) {
-				$fileValues[] = (int) trim(str_replace("fileLabel", "", $headerValue));
-			}
-		}
-		return max($fileValues);
-	}
-
 	# Function for data validation
 	function validateArticles($articles)
 	{
-		global $filesFolder;
 		$errors = "";
 		$articleRow = 0;
 
@@ -558,7 +779,7 @@ class ConvertExcel2PKPNativeXML {
 		return $errors;
 	}
 
-	// get unique column keys statring with <name>
+	// get unique column keys starting with <name>
 	function getUniqueKeys($articles, $name = NULL)
 	{
 		$uniqueKeys = array_unique(array_keys(array_merge(...$articles)));
@@ -566,9 +787,73 @@ class ConvertExcel2PKPNativeXML {
 			return $uniqueKeys;
 		}
 		return array_filter($uniqueKeys, function ($key) use ($name) {
-			return strpos($key, $name) === 0;
+			return ((strpos($key, $name) === 0) || (strpos($key, $name) === 3)); // does the name occur at the beginning or after a locale code?
 		});
 	}
+
+	// Function to find the specific element and get its child elements
+	function getChildElementsOrder($node, $elementName) {
+		$order = [];
+
+		// Check if the node is the target element
+		if ($node->nodeType === XML_ELEMENT_NODE && $node->nodeName === $elementName) {
+			if ($node->hasChildNodes()) {
+				foreach ($node->childNodes as $child) {
+					if ($child->nodeType === XML_ELEMENT_NODE) {
+						$order[] = $child->nodeName; // Add the element name to the order
+					}
+				}
+			}
+		}
+
+		// Recursively search for the target element in child nodes
+		if ($node->hasChildNodes()) {
+			foreach ($node->childNodes as $child) {
+				$order = array_merge($order, $this->getChildElementsOrder($child, $elementName));
+			}
+		}
+
+		return array_unique($order);
+	}
+
+	// return an array with element names that have the "locale" attribute
+	function hasLocaleAttribute($dom) {
+
+		$elementsWithLocale = [];
+
+		$elements = $dom->getElementsByTagName('*');
+		foreach ($elements as $element) {
+			if ($element->hasAttribute('locale')) {
+				$elementsWithLocale[] = $element->nodeName;
+			}
+		}
+		return $elementsWithLocale;
+	}
+
+	// strip 'article' prefix from key names
+	function stripColumnPrefix(array $data, string $prefix) {
+		foreach ($data as $key => $value) {
+			// Check if the key starts with 'article'
+			if ((strpos($key, $prefix) === 0) || (strpos($key, $prefix) === 3)) {
+				// Remove 'article' from the key
+				if (strpos($key, $prefix) === 3) {
+					// there is a locale descriptor we need to consider
+					$newKey = str_replace($prefix, '', $key);
+					$keyParts = explode(':', $newKey);
+					$keyParts[1]= lcfirst($keyParts[1]);
+					$key = implode(':', $keyParts);
+					$newKey = str_replace($prefix, '', $key);
+				} else {
+					$newKey = lcfirst(str_replace($prefix, '', $key));
+				}
+				$newArray[$newKey] = $value; // Assign the value to the new key
+			} else {
+				$newArray[$key] = $value; // Keep the original key-value pair
+			}
+		}
+		return $newArray;
+	}
+
 }
 
 $app = new ConvertExcel2PKPNativeXML($argv);
