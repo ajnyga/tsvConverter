@@ -67,7 +67,7 @@ Note that simple fields like, e.g. <description> can be added as columns to the 
 ## Issues & Sections
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
-| issueDatepublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |   |
+| issueDatePublished |  Issue publication date, yyyy-mm-dd. Note! has to be unique for each individual issue. | x |   |
 | issueVolume |  Issue volume |  |   |
 | issueNumber |  Issue number |  |   |
 | issueYear |  Issue year | x |   |
