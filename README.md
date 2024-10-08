@@ -40,12 +40,12 @@ Only validate by adding -v:
 ### Step by step instructions
 1. Create an Excel file containing the article data. See the details below and the "exampleMinimal.xlsx" and "exampleAdvanced.xlsx" files. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Move the Excel file to the same folder as the conversion script. Move the full text files to a folder, for example "exampleFiles", below the conversion script.
-3. Verfiy default values set in the file `config.ini`. In particular defaultLoacle (if not set via cli) and defaultUserGroupRef (see below).
+3. Verify default values set in the file `config.ini`. In particular defaultLoacle (if not set via cli) and defaultUserGroupRef (see below).
 4. Run `php convert.php -x exampleMinimal.xlsx -f exampleFiles`
 
 Note that simple fields like, e.g. <description> can be added as columns to the excel sheet and will be converted to appropriate XML tags even if not listed in the tables below (see Advanced usage below).
 
-The `defaultUserGroupRef` must be set in the file `config.ini` and needs to be compatible with the one used in your system (in the primary locale). Note that some journals (even with English as their primary language) may have a properitary name for this group.
+The `defaultUserGroupRef` must be set in the file `config.ini` and needs to be compatible with the one used in your system (in the primary locale). Note that some journals (even with English as their primary language) may have a proprietary name for this group.
 
 For larger imports it might be necessary to temporarily increase your OJS servers “post_max_size” and “upload_max_filesize” in your php.ini.
 
