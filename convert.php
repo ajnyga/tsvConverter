@@ -15,10 +15,10 @@ class ConvertExcel2PKPNativeXML {
 	// cli parsing
 	private $opts;
 	private $posArgs;
-	private $filesFolder;
+	private $fullFilesFolderPath;
 	private $onlyValidate = false;
-	private $fileName = 'articleData.xlsx';
-	private $files = 'files';
+	private $xlsxFileName = 'articleData.xlsx';
+	private $filesFolderName = 'files';
 
 	// defaults
 	private $defaultUploader = 'admin';
@@ -67,6 +67,11 @@ class ConvertExcel2PKPNativeXML {
 		$this->opts = getopt($shortOpts, $longOpts, $rest_index);
 		$this->posArgs = array_slice($argv, $rest_index);
 
+		// Parse the INI configuration file
+		foreach (parse_ini_file('config.ini', true) as $key => $value) {
+			$this->{$key} = $value;
+		}
+
 		if (!$this->validateInput()) {
 			echo date('H:i:s'), " Data validation failed!", EOL;
 		}
@@ -86,9 +91,9 @@ class ConvertExcel2PKPNativeXML {
 
 		// load data
 		echo date('H:i:s'), " Creating a new PHPExcel object", EOL;
-		$objReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($this->fileName);
+		$objReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($this->xlsxFileName);
 		$objReader->setReadDataOnly(false);
-		$objPhpSpreadsheet = $objReader->load($this->fileName);
+		$objPhpSpreadsheet = $objReader->load($this->xlsxFileName);
 		$sheet = $objPhpSpreadsheet->setActiveSheetIndex(0);
 
 		echo date('H:i:s'), " Creating an array", EOL;
@@ -180,7 +185,7 @@ class ConvertExcel2PKPNativeXML {
 			$issuesDOM = $this->processData($issuesDOM, $issueDataContent);
 		}
 
-		$dom->save($this->fileName.'.xml');
+		$dom->save($this->xlsxFileName.'.xml');
 	}
 
 	function validateInput() {
@@ -189,15 +194,14 @@ class ConvertExcel2PKPNativeXML {
 			echo "Error: Required parameter -x <xlsx filename> is missing.\n";
 			exit(1);
 		}
-		$this->fileName = $this->opts['x'];
+		$this->xlsxFileName = $this->opts['x'];
 
 		// Check if the required parameter -f is set
-		$this->files = "files";
 		if (!isset($this->opts['f'])) {
 			echo "Error: Required parameter -f <files folder name> is missing.\n";
 			exit(1);
 		}
-		$this->files = $this->opts['f'];
+		$this->filesFolderName = $this->opts['f'];
 
 		// Check if the optional validate flag is set
 		$this->onlyValidate = 0;
@@ -221,15 +225,15 @@ class ConvertExcel2PKPNativeXML {
 		* ------------------------------------
 		*/
 
-		if (!file_exists($this->fileName)) {
+		if (!file_exists($this->xlsxFileName)) {
 			echo date('H:i:s') . " ERROR: Excel file does not exist" . EOL;
 			die();
 		}
 
 		// Location of full text files
-		$this->filesFolder = dirname(__FILE__) . "/" . $this->files . "/";
+		$this->fullFilesFolderPath = dirname(__FILE__) . "/" . $this->filesFolderName . "/";
 
-		if (!file_exists($this->filesFolder)) {
+		if (!file_exists($this->fullFilesFolderPath)) {
 			echo date('H:i:s') . " ERROR: given folder does not exist" . EOL;
 			die();
 		}
@@ -530,7 +534,7 @@ class ConvertExcel2PKPNativeXML {
 	
 						$subFileDOM = $this->processData($subFileDOM, $submissionFileData);
 						
-						$filePath = $this->filesFolder . $submissionFileData['name'];
+						$filePath = $this->fullFilesFolderPath . $submissionFileData['name'];
 						if (file_exists($filePath)) {
 							$size = filesize($filePath);
 							echo date('H:i:s') . " Addting file " . $filePath . EOL;
@@ -757,7 +761,7 @@ class ConvertExcel2PKPNativeXML {
 
 				if (isset($article['file' . $i]) && $article['file' . $i] && !preg_match("@^https?://@", $article['file' . $i])) {
 
-					$fileCheck = $this->filesFolder . $article['file' . $i];
+					$fileCheck = $this->fullFilesFolderPath . $article['file' . $i];
 
 					if (!file_exists($fileCheck))
 						$errors .= date('H:i:s') . " ERROR: file " . $i . " missing " . $fileCheck . EOL;

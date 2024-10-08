@@ -40,10 +40,13 @@ Only validate by adding -v:
 ### Step by step instructions
 1. Create an Excel file containing the article data. See the details below and the "exampleMinimal.xlsx" and "exampleAdvanced.xlsx" files. The metadata of each article is in one row. The order of the columns does not matter. 
 2. Move the Excel file to the same folder as the conversion script. Move the full text files to a folder, for example "exampleFiles", below the conversion script.
-3. Run `php convert.php -x exampleMinimal.xlsx -f exampleFiles`
-4. The script will create one XML per year.
+3. Verfiy default values set in the file `config.ini`. In particular defaultLoacle (if not set via cli) and defaultUserGroupRef (see below).
+4. Run `php convert.php -x exampleMinimal.xlsx -f exampleFiles`
+5. The script will create one XML per year.
 
 Note that simple fields like, e.g. <description> can be added as columns to the excel sheet and will be converted to appropriate XML tags even if not listed in the tables below (see Advanced usage below).
+
+The `defaultUserGroupRef` must be set in the file `config.ini` and needs to be compatible with the one used in your system (in the primary locale). Note that some journals (even with English as their primary language) may have a properitary name for this group.
 
 ## Article
 | Field | Description |  Required| Multilingual Support|
@@ -145,6 +148,7 @@ The conversion tool is distributed under the GNU GPL v3.
 - full issue data used for issue identification
 - rewrite to use PHP DOM model
 - various XSDs for OJS 3.3 native XML added to improve XML handling and enable validation (by external tools like e.g. xmllint)
+- config file added to handle default values
 
 ## Changes in version 1.5.0.0 (Aug 2023)
 - new fields added
