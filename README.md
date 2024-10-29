@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.6.0.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Oct 2024)
+Version 1.6.1.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Oct 2024)
 
 The tool was originally created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). The current version consitutes a major revision and includes new features. Feel free to use and develop further.
 
@@ -100,10 +100,11 @@ If an article has for example three authors, the excel file should include colum
 ### Files & Galleys
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
-| fileName1|  Name of the file, "article1.pdf" or url for remote galley| x |   |
+| fileName1|  Name of the file, "article1.pdf" or url for remote galley. If the fileName is empty and a galleyDoi is provided the file will automatically be downloaded if it doesn't exists in the files folder.| x |   |
 | fileGenre1|  Usually "Article Text"| x |   |
 | galleyLabel1|  Usually "PDF"| x | x |
 | galleyLocale1|  "en", "fi" etc. | x |   |
+| galleyDoi1| DOI directly poiting to the galley file | ||
 
 ## Importing multilingual data
 
@@ -142,6 +143,9 @@ E.g. to add an issue description simply add a column `issueDescription`, or in F
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.6.1.0 (Oct 2024)
+- added feature to automatically download galley files if field galleyDOI is provided
 
 ## Changes in version 1.6.0.0 (Oct 2024)
 - revised command line parsing

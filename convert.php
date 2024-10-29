@@ -112,6 +112,24 @@ class ConvertExcel2PKPNativeXML {
 			die();
 		}
 
+		# Download galley files if fileName is empty or not provided and a gelleyDoi is available
+		foreach ($articles as $index => &$article) { // Note the reference (&) to modify the original array
+			foreach ($article as $key => $value) {
+				if (preg_match('/^fileName\d+$/', $key) && empty($value)) {
+					$galleyDoiKey = str_replace('fileName', 'galleyDoi', $key);
+					if (isset($article[$galleyDoiKey]) && !empty($article[$galleyDoiKey])) {
+						$url = $article[$galleyDoiKey];
+						$article[$key] = 'galleyFile' . ($index-array_key_first($articles)+1) . '.pdf';
+						if (!file_exists($this->fullFilesFolderPath.$article[$key])) {
+							$fileContent = file_get_contents($url);
+							file_put_contents($this->fullFilesFolderPath.$article[$key], $fileContent);
+							echo "Downloaded: ".$article[$key]." from $url\n";
+						}
+					}
+				}
+			}
+		}
+
 		# If only validation is selected, exit
 		if ($this->onlyValidate == 1) {
 			echo date('H:i:s'), " Validation complete ", EOL;
@@ -265,11 +283,14 @@ class ConvertExcel2PKPNativeXML {
 
 					$issueIdentificationData = [];
 					foreach ($this->issueIdentificationElementOrder as $field) {
-						if (array_key_exists($field, $issueData)) {
-							$issueIdentificationData[$field] = $issueData[$field];
-							unset($issueData[$field]);
+						foreach (array_keys($issueData) as $key) {
+							if (str_ends_with($key,$field)) {
+								$issueIdentificationData[$key] = $issueData[$key];
+								unset($issueData[$key]);
+							}
 						}
 					}
+					
 					$issueData['issue_identification'] = $issueIdentificationData;
 
 					$issueData = $this->sortArrayElementsByKey($issueData, $this->issueElementOrder);
@@ -564,15 +585,21 @@ class ConvertExcel2PKPNativeXML {
 							case (strpos($tagname, ':') === 2):
 								// elements with locale attribute
 								[$locale, $tagname] = $this->splitLocaleTagName($tagname);
-								$element = $dom->ownerDocument->createElement($tagname, $content);
+								$element = $dom->ownerDocument->createElement($tagname);
+								$element->appendChild($dom->ownerDocument->createTextNode($content));
 								if ($locale) {
 									$element->setAttribute('locale', $locale);
 								}
 								$dom->appendChild($element);
 								break;
+							case 'copyrightYear':
+								if (strlen($content) == 0) {
+									break;
+								}
 							default:
 								// elements without locale attribute
-								$element = $dom->ownerDocument->createElement($tagname, $content);
+								$element = $dom->ownerDocument->createElement($tagname);
+								$element->appendChild($dom->ownerDocument->createTextNode($content));
 								$dom->appendChild($element);
 								break;
 						}
