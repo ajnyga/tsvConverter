@@ -3,6 +3,8 @@
 # Usage:
 # php convert.php -x <xslx file> -f <files folder> [-v] [-l <default locale>]
 
+# Hint: Use debugPrintXML($root) to write DOM to a file 'debug.xml'. $root should be a DOMDocument object.
+
 // PHPExcel settings
 ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
@@ -55,6 +57,7 @@ class ConvertExcel2PKPNativeXML {
 	private $submissionFileElementOrder;
 	private $issueElementOrder;
 	private $issueIdentificationElementOrder;
+	private $coverImageElementOrder;
 	private $elementHasLocaleAttribute;
 	
 	// Constructor
@@ -87,6 +90,7 @@ class ConvertExcel2PKPNativeXML {
 		$this->submissionFileElementOrder = $this->getChildElementsOrder($dom, 'submission_file');
 		$this->issueElementOrder = $this->getChildElementsOrder($dom, 'issue');
 		$this->issueIdentificationElementOrder = $this->getChildElementsOrder($dom, 'issue_identification');
+		$this->coverImageElementOrder = $this->getChildElementsOrder($dom, 'cover');
 		$this->elementHasLocaleAttribute = $this->hasLocaleAttribute($dom);
 
 		// load data
@@ -113,7 +117,7 @@ class ConvertExcel2PKPNativeXML {
 		}
 
 		# Download galley files if fileName is empty or not provided and a gelleyDoi is available
-		foreach ($articles as $index => &$article) { // Note the reference (&) to modify the original array
+		foreach ($articles as $index => &$article) {
 			foreach ($article as $key => $value) {
 				if (preg_match('/^fileName\d+$/', $key) && empty($value)) {
 					$galleyDoiKey = str_replace('fileName', 'galleyDoi', $key);
@@ -163,7 +167,15 @@ class ConvertExcel2PKPNativeXML {
 
 			// get issue data
 			$issueIdentification = array_intersect_key($article, array_flip($this->issueKeys));
-			$articleIssueHash = hash("sha256", implode(", ", $issueIdentification));
+			$articleIssueHash = hash("sha256", implode(
+				", ",
+				[
+					$issueIdentification['issueDatePublished'],
+					$issueIdentification['issueVolume'],
+					$issueIdentification['issueYear'],
+					$issueIdentification['issueTitle']
+				])
+			);
 			$issueIdentifications[$articleIssueHash] = $issueIdentification;
 			foreach ($issueIdentification as $key => $value) {
 				unset($article[$key]);
@@ -180,7 +192,6 @@ class ConvertExcel2PKPNativeXML {
 			// put all together			
 			$issueData[$articleIssueHash]['issues'] = $issueIdentification;
 			$issueData[$articleIssueHash]['sections']['section'] = $sectionIdentification;
-
 			$issueData[$articleIssueHash]['articles'][$id] = $article;
 			$issueData[$articleIssueHash]['articles'][$id]['sectionAbbrev'] = $sectionIdentification['sectionAbbrev'];
 		}
@@ -195,7 +206,7 @@ class ConvertExcel2PKPNativeXML {
 		$dom = new DOMDocument('1.0', 'UTF-8');
 		$dom->formatOutput = true;
 
-		[$issuesDOM, $pos] = $this->getOrCreateDOMElement($dom, 'issues', 'http://pkp.sfu.ca');
+		[$issuesDOM, $pos] = $this->getOrCreateDOMElement($dom, 'issues', namespace: 'http://pkp.sfu.ca');
 		$dom->appendChild($issuesDOM);
 
 		// Create issue DOMs
@@ -203,7 +214,21 @@ class ConvertExcel2PKPNativeXML {
 			$issuesDOM = $this->processData($issuesDOM, $issueDataContent);
 		}
 
-		$dom->save($this->xlsxFileName.'.xml');
+		// reorder issue nodes
+		foreach ($issuesDOM->childNodes as $issueDOM) {
+			$issueDOM = $this->orderDOMNodes($issueDOM, $this->issueElementOrder);
+		}
+
+		$xpath = new DOMXPath($dom);
+		$xpath->registerNamespace('xmlns', 'http://pkp.sfu.ca'); 
+		$numberOfIssues = $xpath->query( "//xmlns:issue", $dom)->length;
+		$numberOfSections = $xpath->query( "//section", $dom)->length;
+		$numberOfArticles = $xpath->query( "//article", $dom)->length;
+		$numberOfArticleGalleys = $xpath->query( "//xmlns:article_galley", $dom)->length;
+		$numberOfEmbeds = $xpath->query( "//embed", $dom)->length;
+		print_r("Info: Added $numberOfIssues issues, $numberOfSections sections, $numberOfArticles articles, $numberOfArticleGalleys gelleys and $numberOfEmbeds embedded elements to the XML file.\n");
+
+		$dom->save(filename: $this->xlsxFileName.'.xml');
 	}
 
 	function validateInput() {
@@ -393,10 +418,12 @@ class ConvertExcel2PKPNativeXML {
 					$publicationDOM->setAttribute('access_status', "0");
 					$publicationDOM->setAttribute('url_path', "");
 
-					[$element, $pos] = $this->getOrCreateDOMElement($dom,'issue');
-					$issueDatePublished= $element->getElementsByTagName('date_published')[0]->textContent;
-
-					$publicationDOM->setAttribute('date_published', $issueDatePublished);
+					[$element, $pos] = $this->getOrCreateDOMElement($dom->ownerDocument,'issue');
+					$datePublishedList = $element->getElementsByTagName('date_published');
+					if ($datePublishedList->length > 0) {
+						$publicationDOM->setAttribute('date_published', $datePublishedList[0]->textContent);
+					}
+					
 					$publicationDOM->setAttribute('section_ref', $content['sectionAbbrev']);
 					unset($content['sectionAbbrev']);
 					if (isset($content['articleSeq'])) {
@@ -524,20 +551,21 @@ class ConvertExcel2PKPNativeXML {
 					$id->setAttribute('type', 'doi');
 					$id->setAttribute('advice', 'update');
 					break;
-				case str_ends_with($tagname, 'keywords'): // Checks if $value ends with 'keywords'
-				case str_ends_with($tagname, 'disciplines'): // Checks if $value ends with 'disciplines'
-				case str_ends_with($tagname, 'subjects'): // Checks if $value ends with 'subjects'
-					[$locale, $xmlTagName] = $this->splitLocaleTagName($tagname);
-					[$elementsDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $xmlTagName);
-					$dom->appendChild($elementsDOM);
-
-					$elementsDOM->setAttribute('locale', $locale);
-					
-					foreach (explode(';', $content) as $element) {
-						$elementDOM = $dom->ownerDocument->createElement(rtrim($xmlTagName, "s"), $element);
-						$elementsDOM->appendChild($elementDOM);
-					}
-					
+				case str_ends_with($tagname, 'keywords'):
+				case str_ends_with($tagname, 'disciplines'):
+				case str_ends_with($tagname, 'subjects'):
+					if (strlen($content) > 0) {
+						[$locale, $xmlTagName] = $this->splitLocaleTagName($tagname);
+						[$elementsDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $xmlTagName);
+						$dom->appendChild($elementsDOM);
+	
+						$elementsDOM->setAttribute('locale', $locale);
+						
+						foreach (explode(';', $content) as $element) {
+							$elementDOM = $dom->ownerDocument->createElement(rtrim($xmlTagName, "s"), $element);
+							$elementsDOM->appendChild($elementDOM);
+						}
+					}					
 					break;
 				case 'submission_file':
 					foreach ($content as $id => $submissionFileData) {
@@ -558,7 +586,7 @@ class ConvertExcel2PKPNativeXML {
 						$filePath = $this->fullFilesFolderPath . $submissionFileData['name'];
 						if (file_exists($filePath)) {
 							$size = filesize($filePath);
-							echo date('H:i:s') . " Addting file " . $filePath . EOL;
+							echo date('H:i:s') . " Adding file " . $filePath . EOL;
 							$file = $dom->ownerDocument->createElement('file');
 							$subFileDOM->appendChild($file);
 
@@ -571,6 +599,46 @@ class ConvertExcel2PKPNativeXML {
 							$file->appendChild($embed);
 						} else {
 							echo date('H:i:s') . " WARNING: file " . $filePath . " not found !" . EOL;
+						}
+					}
+					break;
+				case str_ends_with($tagname, 'coverImage'):
+				case str_ends_with($tagname, 'coverImageAltText'):
+					if (strlen($content) > 0) {
+
+						[$locale, $xmlTagName] = $this->splitLocaleTagName($tagname);
+						[$coverDOM, $pos] = $this->getOrCreateDOMElement($dom, 'cover', $locale);
+						if ($coverDOM->childElementCount == 0) {
+							[$coversDOM, $pos] = $this->getOrCreateDOMElement($dom, 'covers', namespace: 'http://pkp.sfu.ca');
+							$coversDOM->appendChild($coverDOM);
+							$dom->appendChild($coversDOM);
+							$coverDOM->setAttribute('locale', $locale);
+						}
+
+						if ($xmlTagName == 'coverImageAltText') {
+							$node = $coverDOM->getElementsByTagName('cover_image_alt_text')[0];
+							if ($node) {
+								$coverDOM->removeChild($node);
+							}
+							$coverDOM = $this->processData($coverDOM, ['cover_image_alt_text' => $content]);
+						} else {
+							$coverDOM = $this->processData($coverDOM, ['cover_image' => $content]);
+							$filePath = $this->fullFilesFolderPath . $content;
+							if (file_exists($filePath)) {
+								$embed = $dom->ownerDocument->createElement('embed', base64_encode(file_get_contents($filePath)));
+								$embed->setAttribute('encoding','base64');
+								$coverDOM->appendChild($embed);
+							}
+						}
+
+						//reorder nodes and set default alt text
+						$childNodes = ['cover_image_alt_text' => $dom->ownerDocument->createElement('cover_image_alt_text',"")];
+						foreach ($coverDOM->childNodes as $child) {
+							$childNodes[$child->tagName] = $child;
+						}
+						$childNodes = $this->sortArrayElementsByKey($childNodes, $this->coverImageElementOrder);
+						foreach ($childNodes as $child) {
+							$coverDOM->appendChild($child);
 						}
 					}
 					break;
@@ -667,14 +735,21 @@ class ConvertExcel2PKPNativeXML {
 	}
 
 	// Try to get the last DOM element with the given tag name. If none exists create a new one
-	function getOrCreateDOMElement($dom, $tagname, $namespace = NULL) {
+	function getOrCreateDOMElement($dom, $tagname, $locale = NULL, $namespace = NULL) {
 		// try to get the requested element
 		if (get_class($dom) !== "DOMDocument") {
 			$root = $dom->ownerDocument;
 		} else {
 			$root = $dom;
 		}
-		$targetDOM = $root->getElementsByTagName($tagname);
+		$targetDOM = $dom->getElementsByTagName($tagname);
+		if (($targetDOM->length > 0) && $locale) {
+			$xpath = new DOMXPath($root);
+			$targetDOM = $xpath->query(
+				expression: "//".$tagname."[@locale='$locale']",
+				contextNode: $dom
+			); 
+		}
 		
 		// create element if not found
 		if (!isset($targetDOM) || $targetDOM->length == 0) {
@@ -885,6 +960,22 @@ class ConvertExcel2PKPNativeXML {
 		return $newArray;
 	}
 
+	function orderDOMNodes($dom, $order) {
+		$childNodes = [];
+		foreach ($dom->childNodes as $child) {
+			$childNodes[$child->tagName] = $child;
+		}
+		$childNodes = $this->sortArrayElementsByKey($childNodes, $order);
+		foreach ($childNodes as $child) {
+			$dom->appendChild($child);
+		}
+		return $dom;
+	}
+
 }
 
 $app = new ConvertExcel2PKPNativeXML($argv);
+
+function debugPrintXML($root) {
+	$root->save('debug.xml');
+}

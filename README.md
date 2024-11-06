@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.6.1.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Oct 2024)
+Version 1.6.2.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Nov 2024)
 
 The tool was originally created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). The current version consitutes a major revision and includes new features. Feel free to use and develop further.
 
@@ -67,6 +67,8 @@ For larger imports it might be necessary to temporarily increase your OJS server
 | articleLicenseUrl | http://creativecommons.org/licenses/by/4.0 |  |   |
 | articlePrimaryContactId  | Id of primary author (default = 1) |  |  |
 | doi | "10.1234/art.182" |  |   |
+| articleCoverImage | Name of cover image file |  | x |
+| articleCoverImageAltText | Alt text for cover image file |  | x |
 
 ## Issues & Sections
 | Field | Description |  Required| Multilingual Support|
@@ -79,6 +81,8 @@ For larger imports it might be necessary to temporarily increase your OJS server
 | sectionTitle |  Section title, eg. "Articles" | x  | x |
 | sectionAbbrev |  Section abbreviation, eg. "ART" | x  |   |
 | sectionSeq |  Section sequence inside an issue, first section '1' |   |   |
+| issueCoverImage | Name of cover image file |  | x |
+| issueCoverImageAltText | Alt text for cover image file |  | x |
 
 ## Multiplied fields
 An article can have multiple authors or full text files. Every article has to have at least one author and one file.
@@ -143,6 +147,9 @@ E.g. to add an issue description simply add a column `issueDescription`, or in F
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## Changes in version 1.6.2.0 (Nov 2024)
+- added support for cover images
 
 ## Changes in version 1.6.1.0 (Oct 2024)
 - added feature to automatically download galley files if field galleyDOI is provided
