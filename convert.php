@@ -553,10 +553,10 @@ class ConvertExcel2PKPNativeXML {
 						$articleGalleysDOM->setAttribute('locale', $this->locales[$galleyData['locale']]);
 						$articleGalleysDOM->setAttribute('approved', "false");
 
-						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['name' => $galleyData['label']]);
 						if (array_key_exists('doi', $galleyData)) {
 							$articleGalleysDOM = $this->processData($articleGalleysDOM, ['doi' => $galleyData['doi']]);
 						}
+						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['name' => $galleyData['label']]);
 						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['seq' => $id-1]);
 
 						[$fileRef, $pos] = $this->createDOMElement($dom->ownerDocument, 'submission_file_ref');
