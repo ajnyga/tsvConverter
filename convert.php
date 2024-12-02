@@ -170,10 +170,10 @@ class ConvertExcel2PKPNativeXML {
 			$articleIssueHash = hash("sha256", implode(
 				", ",
 				[
-					$issueIdentification['issueDatePublished'],
-					$issueIdentification['issueVolume'],
-					$issueIdentification['issueYear'],
-					$issueIdentification['issueTitle']
+					array_key_exists('issueDatePublished',$issueIdentification)?$issueIdentification['issueDatePublished']:"",
+					array_key_exists('issueVolume',$issueIdentification)?$issueIdentification['issueVolume']:"",
+					array_key_exists('issueYear',$issueIdentification)?$issueIdentification['issueYear']:"",
+					array_key_exists('issueTitle',$issueIdentification)?$issueIdentification['issueTitle']:""
 				])
 			);
 			$issueIdentifications[$articleIssueHash] = $issueIdentification;
@@ -229,8 +229,35 @@ class ConvertExcel2PKPNativeXML {
 		print_r("Info: Added $numberOfIssues issues, $numberOfSections sections, $numberOfArticles articles, $numberOfArticleGalleys gelleys and $numberOfEmbeds embedded elements to the XML file.\n");
 
 		$dom->save(filename: $this->xlsxFileName.'.xml');
+
+		// validate XML
+		// This currently will produce validation errors not reported by different other validation tools
+		// Probably due to xsd version issues. Retry after PHP updated libxml
+		// $this->validateXML($dom);
 	}
 
+	function validateXML($dom) {
+		// Enable internal error handling
+		libxml_use_internal_errors(true);
+
+		// Validate the XML against the XSD
+		$xsd = 'native.xsd';
+		if ($dom->schemaValidate($xsd)) {
+			echo "The XML document is valid.";
+		} else {
+			// Retrieve and display errors
+			echo "The XML document is not valid. Errors:\n";
+			foreach (libxml_get_errors() as $error) {
+				echo "Error: " . $error->message;
+				// echo "Line: " . $error->line . "\n";
+				// echo "Column: " . $error->column . "\n";
+			}
+		}
+
+		// Clear the error buffer
+		libxml_clear_errors();
+	}
+	
 	function validateInput() {
 		// Check if the required parameter -x is set
 		if (!isset($this->opts['x'])) {
@@ -316,16 +343,20 @@ class ConvertExcel2PKPNativeXML {
 						}
 					}
 					
+					$issueData['id'] = [
+						'type'=> 'internal',
+						'id' => 0
+					];
 					$issueData['issue_identification'] = $issueIdentificationData;
 
 					$issueData = $this->sortArrayElementsByKey($issueData, $this->issueElementOrder);
 
 					$issueDOM = $this->processData($issueDOM, $issueData);
 
-					$issueDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-					$issueDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
 					$issueDOM->setAttribute('published', '1');
 					$issueDOM->setAttribute('current', '0');
+
+					$issueDOM = $this->orderDOMNodes($issueDOM, $this->issueElementOrder);
 					break;
 				case 'issue_identification':
 					[$issuesIdentificationDOM, $pos] = $this->createDOMElement($dom->ownerDocument, $tagname);
@@ -400,9 +431,6 @@ class ConvertExcel2PKPNativeXML {
 					$publicationId = $pos;
 
 					$dom->setAttribute('current_publication_id', $publicationId);
-
-					$publicationDOM->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-					$publicationDOM->setAttribute('xsi:schemaLocation', 'http://pkp.sfu.ca native.xsd');
 					
 					# Check if language has an alternative default locale
 					# If it does, use the locale in all fields
@@ -526,6 +554,9 @@ class ConvertExcel2PKPNativeXML {
 						$articleGalleysDOM->setAttribute('approved', "false");
 
 						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['name' => $galleyData['label']]);
+						if (array_key_exists('doi', $galleyData)) {
+							$articleGalleysDOM = $this->processData($articleGalleysDOM, ['doi' => $galleyData['doi']]);
+						}
 						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['seq' => $id-1]);
 
 						[$fileRef, $pos] = $this->createDOMElement($dom->ownerDocument, 'submission_file_ref');
@@ -962,12 +993,14 @@ class ConvertExcel2PKPNativeXML {
 
 	function orderDOMNodes($dom, $order) {
 		$childNodes = [];
-		foreach ($dom->childNodes as $child) {
-			$childNodes[$child->tagName] = $child;
+		foreach ($dom->childNodes as $key => $child) {
+			$childNodes[$child->tagName][$key] = $child;
 		}
 		$childNodes = $this->sortArrayElementsByKey($childNodes, $order);
-		foreach ($childNodes as $child) {
-			$dom->appendChild($child);
+		foreach ($childNodes as $tagname) {
+			foreach ($tagname as $child) {
+				$dom->appendChild($child);
+			}
 		}
 		return $dom;
 	}
