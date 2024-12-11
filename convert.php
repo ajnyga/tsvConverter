@@ -123,11 +123,17 @@ class ConvertExcel2PKPNativeXML {
 					$galleyDoiKey = str_replace('fileName', 'galleyDoi', $key);
 					if (isset($article[$galleyDoiKey]) && !empty($article[$galleyDoiKey])) {
 						$url = $article[$galleyDoiKey];
-						$article[$key] = 'galleyFile' . ($index-array_key_first($articles)+1) . '.pdf';
-						if (!file_exists($this->fullFilesFolderPath.$article[$key])) {
+						$filename = basename($url) . '.pdf';
+						$article[$key] = "";
+						if (!is_file($this->fullFilesFolderPath.$filename)) {
 							$fileContent = file_get_contents($url);
-							file_put_contents($this->fullFilesFolderPath.$article[$key], $fileContent);
-							echo "Downloaded: ".$article[$key]." from $url\n";
+							if ($fileContent) {
+								$article[$key] = $filename;
+								file_put_contents($this->fullFilesFolderPath.$article[$key], $fileContent);
+								echo "Downloaded: ".$article[$key]." from $url\n";
+							} else {
+								echo "\033[31mCould not downlaod article galley from $url !\033[0m\n";
+							}
 						}
 					}
 				}
@@ -295,7 +301,7 @@ class ConvertExcel2PKPNativeXML {
 		* ------------------------------------
 		*/
 
-		if (!file_exists($this->xlsxFileName)) {
+		if (!is_file($this->xlsxFileName)) {
 			echo date('H:i:s') . " ERROR: Excel file does not exist" . EOL;
 			die();
 		}
@@ -411,6 +417,8 @@ class ConvertExcel2PKPNativeXML {
 							$id = $matches[2];
 							if (strlen($article[$key]) > 0) {
 								$fileData[$id][$elementName] = $article[$key];
+							} else {
+								$fileData[$id][$elementName] = "";
 							}
 							unset($article[$key]);
 						}
@@ -556,7 +564,8 @@ class ConvertExcel2PKPNativeXML {
 						if (array_key_exists('doi', $galleyData)) {
 							$articleGalleysDOM = $this->processData($articleGalleysDOM, ['doi' => $galleyData['doi']]);
 						}
-						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['name' => $galleyData['label']]);
+						// When importing OJS seems to ignore the <article_galley> locale attribute but set the galley locale on the basis of the locale of the <name> tag
+						$articleGalleysDOM = $this->processData($articleGalleysDOM, [$galleyData['locale'].':name' => $galleyData['label']]);
 						$articleGalleysDOM = $this->processData($articleGalleysDOM, ['seq' => $id-1]);
 
 						[$fileRef, $pos] = $this->createDOMElement($dom->ownerDocument, 'submission_file_ref');
@@ -614,8 +623,8 @@ class ConvertExcel2PKPNativeXML {
 	
 						$subFileDOM = $this->processData($subFileDOM, $submissionFileData);
 						
-						$filePath = $this->fullFilesFolderPath . $submissionFileData['name'];
-						if (file_exists($filePath)) {
+						$filePath = $this->normalizePath($this->fullFilesFolderPath . $submissionFileData['name']);
+						if (is_file($filePath)) {
 							$size = filesize($filePath);
 							echo date('H:i:s') . " Adding file " . $filePath . EOL;
 							$file = $dom->ownerDocument->createElement('file');
@@ -655,7 +664,7 @@ class ConvertExcel2PKPNativeXML {
 						} else {
 							$coverDOM = $this->processData($coverDOM, ['cover_image' => $content]);
 							$filePath = $this->fullFilesFolderPath . $content;
-							if (file_exists($filePath)) {
+							if (is_file($filePath)) {
 								$embed = $dom->ownerDocument->createElement('embed', base64_encode(file_get_contents($filePath)));
 								$embed->setAttribute('encoding','base64');
 								$coverDOM->appendChild($embed);
@@ -896,7 +905,7 @@ class ConvertExcel2PKPNativeXML {
 
 					$fileCheck = $this->fullFilesFolderPath . $article['file' . $i];
 
-					if (!file_exists($fileCheck))
+					if (!is_file($fileCheck))
 						$errors .= date('H:i:s') . " ERROR: file " . $i . " missing " . $fileCheck . EOL;
 
 					$fileLabelColumn = 'fileLabel' . $i;
@@ -1003,6 +1012,16 @@ class ConvertExcel2PKPNativeXML {
 			}
 		}
 		return $dom;
+	}
+
+	function normalizePath($path) {
+		// Replace backslashes with forward slashes
+		$normalizedPath = str_replace('\\', '/', $path);
+		
+		// Remove any redundant slashes
+		$normalizedPath = preg_replace('~/+~', '/', $normalizedPath);
+		
+		return $normalizedPath;
 	}
 
 }
