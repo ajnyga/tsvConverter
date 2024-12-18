@@ -1,6 +1,6 @@
 # Excel to OJS3 XML conversion tool
 
-Version 1.6.2.0 supports the schema for OJS 3.3. (tested with OJS 3.3.0-17, Nov 2024)
+Version 1.6.2.1 supports the schema for OJS 3.3. (tested with OJS 3.3.0-18, Dec 2024)
 
 The tool was originally created for "in-house use" at the Federation of Finnish Learned Societies (https://tsv.fi). The current version consitutes a major revision and includes new features. Feel free to use and develop further.
 
@@ -93,7 +93,6 @@ If an article has for example three authors, the excel file should include colum
 | Field | Description |  Required| Multilingual Support|
 |----------|:--------:|:--------:|:--------:|
 | authorGivenname1|  Given name | x | x |
-| authorMiddlename1|  Middle name |  |   |
 | authorFamilyname1|  Family name |   | x |
 | authorEmail1|  Email |  |   |
 | authorAffiliation1|  Affiliation |   | x |
@@ -147,6 +146,9 @@ E.g. to add an issue description simply add a column `issueDescription`, or in F
 
 ## Licence
 The conversion tool is distributed under the GNU GPL v3.
+
+## CHanges in version 1.6.2.1 (Dec 2024)
+- Middle name removed from Readme as it is not supported by OJS
 
 ## Changes in version 1.6.2.0 (Nov 2024)
 - added support for cover images
