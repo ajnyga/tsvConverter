@@ -124,7 +124,7 @@ class ConvertExcel2PKPNativeXML {
 					if (isset($article[$galleyDoiKey]) && !empty($article[$galleyDoiKey])) {
 						$url = $article[$galleyDoiKey];
 						$filename = basename($url) . '.pdf';
-						$article[$key] = "";
+						$article[$key] = $filename;
 						if (!is_file($this->fullFilesFolderPath.$filename)) {
 							$fileContent = file_get_contents($url);
 							if ($fileContent) {
@@ -638,7 +638,7 @@ class ConvertExcel2PKPNativeXML {
 							$embed->setAttribute('encoding','base64');
 							$file->appendChild($embed);
 						} else {
-							echo date('H:i:s') . " WARNING: file " . $filePath . " not found !" . EOL;
+							echo "\033[1;33m" . date('H:i:s') . ' WARNING: file ' . $filePath . " not found !\033[0m" . PHP_EOL;
 						}
 					}
 					break;
